@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "opmledit document",
+  "description": "One stored OPML document. See storage.md and opml-model.md.",
+  "type": "object",
+  "required": ["schemaVersion", "id", "revision", "created", "modified", "expires", "origin", "opml"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "$ref": "#/$defs/documentId" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "created": { "$ref": "#/$defs/timestamp" },
+    "modified": { "$ref": "#/$defs/timestamp" },
+    "expires": { "$ref": "#/$defs/timestamp" },
+    "origin": {
+      "type": "object",
+      "required": ["kind", "filename"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["new", "import"] },
+        "filename": { "type": ["string", "null"], "maxLength": 255 }
+      }
+    },
+    "opml": { "$ref": "#/$defs/opml" }
+  },
+  "$defs": {
+    "documentId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{22}$"
+    },
+    "timestamp": {
+      "description": "RFC 3339 date-time in UTC",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "ncName": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9._-]*$"
+    },
+    "qName": {
+      "type": "string",
+      "pattern": "^([A-Za-z_][A-Za-z0-9._-]*:)?[A-Za-z_][A-Za-z0-9._-]*$"
+    },
+    "attributes": {
+      "description": "XML attributes in source order, values verbatim",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/qName" },
+      "additionalProperties": { "type": "string" }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "element", "attributes", "children"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^n[0-9]+$" },
+        "element": { "$ref": "#/$defs/qName" },
+        "attributes": { "$ref": "#/$defs/attributes" },
+        "text": { "type": "string" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/node" }
+        }
+      },
+      "if": { "properties": { "element": { "const": "outline" } } },
+      "then": {
+        "properties": { "attributes": { "required": ["text"] } }
+      }
+    },
+    "head": {
+      "description": "OPML 2.0 head elements, values verbatim. Absent = element not present.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string" },
+        "dateCreated": { "type": "string" },
+        "dateModified": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "ownerEmail": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "docs": { "type": "string" },
+        "expansionState": { "type": "string" },
+        "vertScrollState": { "type": "string" },
+        "windowTop": { "type": "string" },
+        "windowLeft": { "type": "string" },
+        "windowBottom": { "type": "string" },
+        "windowRight": { "type": "string" }
+      }
+    },
+    "opml": {
+      "type": "object",
+      "required": ["version", "namespaces", "attributes", "head", "headExtra", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "string", "maxLength": 20, "description": "As written in the file; empty when the version attribute is missing" },
+        "namespaces": {
+          "description": "prefix => namespace URI, declared on <opml> on export",
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/ncName" },
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        },
+        "attributes": {
+          "description": "Root attributes other than version and xmlns declarations",
+          "$ref": "#/$defs/attributes"
+        },
+        "head": { "$ref": "#/$defs/head" },
+        "headExtra": {
+          "description": "Head elements not covered by head, in document order",
+          "type": "array",
+          "items": { "$ref": "#/$defs/node" }
+        },
+        "body": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/node" }
+        }
+      }
+    }
+  }
+}
