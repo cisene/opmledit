@@ -48,7 +48,8 @@ identifies the user, and is stated at account creation.
 ## XML parsing
 
 - No external entities, no network (`LIBXML_NONET`), no entity substitution.
-- `DOCTYPE` rejected, which also rules out entity expansion attacks.
+- `DOCTYPE` removed before parsing, which also rules out entity expansion
+  attacks. This applies to the recovering parse of broken files too.
 - Size, node count and depth limits applied (see [api.md](api.md#limits)).
 
 ## Output

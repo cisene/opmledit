@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OPML 1.0 (and 1.1) for opmledit.
+
+  Written from Dave Winer's OPML 1.0 specification, http://opml.org/spec1.opml
+  (UserLand Software, 2000), with Wayne Steele's 1.0 DTD (xml-dev, 2000) as
+  reference. 1.1 has no published specification and is validated with the
+  same rules.
+
+  Differences from the specification, on purpose:
+  - body may be empty (a new document has no outlines yet);
+  - values are not type checked (dates, numbers, booleans), because opmledit
+    keeps them verbatim.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="unqualified" attributeFormDefault="unqualified">
+
+  <xs:element name="opml">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="head" type="head"/>
+        <xs:element name="body" type="body"/>
+      </xs:sequence>
+      <xs:attribute name="version" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="1.0"/>
+            <xs:enumeration value="1.1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:anyAttribute namespace="##local" processContents="lax"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="head">
+    <xs:all>
+      <xs:element name="title" type="xs:string" minOccurs="0"/>
+      <xs:element name="dateCreated" type="xs:string" minOccurs="0"/>
+      <xs:element name="dateModified" type="xs:string" minOccurs="0"/>
+      <xs:element name="ownerName" type="xs:string" minOccurs="0"/>
+      <xs:element name="ownerEmail" type="xs:string" minOccurs="0"/>
+      <xs:element name="expansionState" type="xs:string" minOccurs="0"/>
+      <xs:element name="vertScrollState" type="xs:string" minOccurs="0"/>
+      <xs:element name="windowTop" type="xs:string" minOccurs="0"/>
+      <xs:element name="windowLeft" type="xs:string" minOccurs="0"/>
+      <xs:element name="windowBottom" type="xs:string" minOccurs="0"/>
+      <xs:element name="windowRight" type="xs:string" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="body">
+    <xs:sequence>
+      <xs:element name="outline" type="outline" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- 1.0: "An outline element may contain any number of arbitrary attributes" -->
+  <xs:complexType name="outline">
+    <xs:sequence>
+      <xs:element name="outline" type="outline" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="text" type="xs:string"/>
+    <xs:attribute name="type" type="xs:string"/>
+    <xs:attribute name="isComment" type="xs:string"/>
+    <xs:attribute name="isBreakpoint" type="xs:string"/>
+    <xs:anyAttribute namespace="##local" processContents="lax"/>
+  </xs:complexType>
+
+</xs:schema>

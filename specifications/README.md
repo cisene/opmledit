@@ -3,6 +3,9 @@
 opmledit is a simple web based editor for OPML files, with PodcastIndex.org as
 a helper backend for finding and checking podcast feeds.
 
+OPML was created by Dave Winer, the father of OPML; his specifications at
+opml.org are the reference (see [opml-model.md](opml-model.md)).
+
 ## Documents
 
 | Document | Covers |
@@ -10,6 +13,7 @@ a helper backend for finding and checking podcast feeds.
 | [opml-model.md](opml-model.md) | What is read from an OPML file, how it is preserved, how it is written back |
 | [storage.md](storage.md) | JSON document format, the `data/` folder, lifecycle, expiry and purging |
 | [document.schema.json](document.schema.json) | JSON Schema for stored documents (normative) |
+| [xsd/opml-1.0.xsd](xsd/opml-1.0.xsd), [xsd/opml-2.0.xsd](xsd/opml-2.0.xsd) | XML Schemas exports are checked against (1.0 also covers 1.1), see [opml-model.md](opml-model.md#schemas) |
 | [auth.md](auth.md) | Accounts, sign in, how users are kept apart |
 | [api.md](api.md) | HTTP API between browser and server |
 | [editor.md](editor.md) | Editor user interface and workflows |
@@ -22,8 +26,9 @@ Users sign in with email address and password; each user sees only their own
 documents. Once signed in, there are two ways in, and the same operations
 after that:
 
-1. **Upload** an existing OPML file of any version (before 1.0, 1.0, 1.1, 2.0).
-   It is parsed with all information preserved (see
+1. **Upload** an existing OPML file of any version (before 1.0, 1.0, 1.1, 2.0),
+   also broken ones (wrong encoding, unclosed elements, no version): they are
+   repaired into valid OPML. Valid files are parsed with all information preserved (see
    [opml-model.md](opml-model.md)).
 2. **New** document from scratch.
 
@@ -89,8 +94,8 @@ remain and are used to fill in outline attributes from PodcastIndex.
 1. Should XML comments in the uploaded file be preserved? (Currently: no, see
    [opml-model.md](opml-model.md#not-preserved).)
 2. Should export also offer a version from before 1.0? There is no
-   published specification, so for now such files can only be exported in
-   their stored form.
+   published specification; for now such files are imported as 1.0 (or 2.0
+   if they use 2.0 features).
 3. Should "Export" also offer a flat OPML (folders removed) for podcast apps that
    do not handle nesting?
 4. Should a read-only share link be offered, so a document can be shown to

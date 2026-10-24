@@ -92,7 +92,7 @@
       "required": ["version", "namespaces", "attributes", "head", "headExtra", "body"],
       "additionalProperties": false,
       "properties": {
-        "version": { "type": "string", "maxLength": 20, "description": "As written in the file; empty when the version attribute is missing" },
+        "version": { "type": "string", "maxLength": 20, "description": "As written in the file, or inferred on import when missing" },
         "namespaces": {
           "description": "prefix => namespace URI, declared on <opml> on export",
           "type": "object",

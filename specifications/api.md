@@ -72,10 +72,12 @@ No body. Creates an empty document (see [opml-model.md](opml-model.md#new-docume
 
 `201` → `{ "document": <document>, "version": "1.1", "warnings": [ "…" ] }`
 
-`version` is the OPML version found in the file (`""` if none).
+`version` is the OPML version found in the file, or the one inferred if it
+had none. Warnings list every repair (see
+[opml-model.md](opml-model.md#parsing)).
 
 Warnings report things that were adjusted or dropped, e.g. comments removed,
-missing `text` filled in.
+encoding fixed, unclosed elements closed, missing `text` filled in.
 
 ### Open — `GET api.php?action=get&id=<id>`
 
