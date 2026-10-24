@@ -17,8 +17,9 @@
       "required": ["kind", "filename"],
       "additionalProperties": false,
       "properties": {
-        "kind": { "enum": ["new", "import"] },
-        "filename": { "type": ["string", "null"], "maxLength": 255 }
+        "kind": { "enum": ["new", "import", "url"] },
+        "filename": { "type": ["string", "null"], "maxLength": 255 },
+        "url": { "type": "string", "maxLength": 2048, "pattern": "^https?://" }
       }
     },
     "opml": { "$ref": "#/$defs/opml" }

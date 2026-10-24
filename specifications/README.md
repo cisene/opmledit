@@ -47,7 +47,7 @@ Users sign in with email address and password; each user sees only their own
 documents. Once signed in, there are two ways in, and the same operations
 after that:
 
-1. **Upload** an existing OPML file of any version (before 1.0, 1.0, 1.1, 2.0),
+1. **Import** an existing OPML file, uploaded or fetched from a URL, of any version (before 1.0, 1.0, 1.1, 2.0),
    also broken ones (wrong encoding, unclosed elements, no version): they are
    repaired into valid OPML. Valid files are parsed with all information preserved (see
    [opml-model.md](opml-model.md)).

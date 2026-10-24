@@ -33,8 +33,10 @@ On load the page calls `me` to know whether a session exists.
 ### Start screen
 
 - **New document** — `create`, then go to `/?doc=<id>`.
-- **Upload OPML** — file picker and drop zone; `import`, then go to the editor
-  and show any import warnings.
+- **Import OPML** — from a file (file picker or drop zone) or from a URL
+  (text field; a link dropped on the drop zone also works). Calls `import`,
+  then goes to the editor and shows any import warnings. A URL import fills
+  in the source URL.
 - **My documents** — from `list`: title, outline count, last modified, expiry
   date (highlighted when within 14 days). Open, export or delete from the list.
 - A note that documents are deleted 90 days after last use (value from

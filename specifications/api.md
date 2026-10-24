@@ -31,6 +31,7 @@ except export.
 | 422 | `invalid_opml` / `invalid_document` | Unparseable OPML, or document fails validation; `details` lists problems |
 | 500 | `config` / `storage` | Server side problem |
 | 502 | `upstream` | PodcastIndex request failed |
+| 502 | `fetch_failed` | Import from URL: the URL could not be fetched |
 
 ## Account
 
@@ -68,7 +69,17 @@ No body. Creates an empty document (see [opml-model.md](opml-model.md#new-docume
 
 ### Import — `POST api.php?action=import`
 
-`multipart/form-data` with field `file` (the OPML file).
+Either a file or a URL:
+
+- `multipart/form-data` with field `file` (the OPML file), or
+- JSON `{ "url": "https://…" }`: the server downloads the OPML from that URL
+  (see [security.md](security.md#fetching-urls)) and imports it the same way.
+  The URL is also stored as the document's source URL
+  ([opml-model.md](opml-model.md#source-comment)), unless the file already
+  has a source comment of its own.
+
+A URL that cannot be fetched gives `502 fetch_failed` with the reason
+("not found (404)", "timed out", "address not allowed", …).
 
 `201` → `{ "document": <document>, "version": "1.1", "warnings": [ "…" ] }`
 
@@ -106,7 +117,8 @@ OPML file:
 
 - `Content-Type: text/x-opml; charset=utf-8`
 - `Content-Disposition: attachment; filename="<name>.opml"`, where the name is
-  `origin.filename` if any, else derived from `head.title`, else the id.
+  `origin.filename` if any (for a URL import, the last part of the URL path),
+  else derived from `head.title`, else the id.
 
 Exports the stored document; the editor saves first if there are unsaved
 changes.
@@ -151,7 +163,9 @@ From `config.php`, with defaults:
 
 | Key | Default | Applies to |
 |-----|---------|-----------|
-| `max_upload_bytes` | 5 MB | Import file |
+| `max_upload_bytes` | 5 MB | Import file, or download for import from URL |
+| `fetch_timeout` | 15 s | Import from URL, whole download |
+| `max_url_imports_per_hour` | 30 | Import from URL, per user |
 | `max_document_bytes` | 5 MB | Save request body / stored JSON |
 | `max_nodes` | 20 000 | Body nodes |
 | `max_depth` | 32 | Nesting depth |

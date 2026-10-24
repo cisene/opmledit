@@ -102,8 +102,9 @@ One JSON object per file, UTF-8, validated by
 | `created` | RFC 3339 UTC | When the document was created in opmledit (not the OPML `dateCreated`). |
 | `modified` | RFC 3339 UTC | Last successful save. |
 | `expires` | RFC 3339 UTC | When the document will be purged unless touched. |
-| `origin.kind` | `"new"` \| `"import"` | How the document started. |
-| `origin.filename` | string \| null | Original upload file name, used to suggest the export name. |
+| `origin.kind` | `"new"` \| `"import"` \| `"url"` | How the document started: new, uploaded file, or imported from a URL. |
+| `origin.filename` | string \| null | Original file name (for `url`, the last part of the URL path), used to suggest the export name. |
+| `origin.url` | string | Only for `url`: the URL it was imported from (after redirects). |
 | `opml` | object | The OPML content, see [opml-model.md](opml-model.md). |
 
 `created`, `modified` and `expires` are opmledit bookkeeping and are never

@@ -46,6 +46,27 @@ identifies the user, and is stated at account creation.
   `is_uploaded_file()` and never moved into `data/` as is; only the parsed
   JSON is stored.
 
+## Fetching URLs
+
+Import from URL makes the server fetch a URL a user typed. To keep it from
+being used to reach the server's own network or other internal services:
+
+- Only `http` and `https`, ports 80 and 443, no user name or password in
+  the URL, max 2048 characters.
+- The host name is resolved first. If any address is loopback, private,
+  link-local, multicast or otherwise reserved (IPv4 and IPv6, including
+  IPv4-mapped IPv6), the fetch is refused. The connection then goes to
+  the address that was checked (curl `CURLOPT_RESOLVE`), so DNS cannot
+  change it in between.
+- At most 3 redirects, each one checked the same way.
+- Download stops at `max_upload_bytes` (counted after decompression) and
+  after `fetch_timeout` seconds.
+- No cookies and no credentials are sent. The user agent is the
+  configured one.
+- The response's `Content-Type` is ignored; the content goes through the
+  same parsing and repair as an uploaded file.
+- Rate limit: `max_url_imports_per_hour` per user.
+
 ## XML parsing
 
 - No external entities, no network (`LIBXML_NONET`), no entity substitution.
