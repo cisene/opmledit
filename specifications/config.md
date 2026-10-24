@@ -157,6 +157,20 @@ Most episodes read from one feed: the first ones in feed order, which is
 usually newest first. The answer says how many the feed has, and the page
 shows "first N shown". Each episode takes about 1–5 KB in the cache.
 
+### Abuse
+
+#### `max_requests_per_hour`
+
+| Default | Range | Unit |
+|---------|-------|------|
+| 300 | 10 – 100000 | requests per hour |
+
+API requests per IP address per hour without a session: `search`,
+`categories`, `lookup`, `lookup_batch`, `episodes`, and later `parse`, `new`
+and `render` ([auth.md](auth.md#rate-limits)). Over the limit: `429` with
+`Retry-After`. A batch lookup counts as one request. IPv6 addresses are
+counted per /64 network.
+
 ### Documents
 
 #### `max_document_bytes`

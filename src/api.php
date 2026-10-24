@@ -7,6 +7,7 @@ require_once __DIR__ . '/lib/PodcastIndexApi.php';
 require_once __DIR__ . '/lib/FeedSearch.php';
 require_once __DIR__ . '/lib/Config.php';
 require_once __DIR__ . '/lib/FeedReader.php';
+require_once __DIR__ . '/lib/RateLimiter.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -53,6 +54,14 @@ try {
 }
 
 $action = $_GET['action'] ?? '';
+
+// No accounts yet, so every request counts as one without a session
+$limiter = new RateLimiter($config['data_dir'] . '/ratelimit');
+$wait = $limiter->hit('stateless', RateLimiter::client($_SERVER['REMOTE_ADDR'] ?? ''), $config['max_requests_per_hour'], 3600);
+if ($wait > 0) {
+  header('Retry-After: ' . $wait);
+  fail(429, 'rate_limited', 'Too many requests, try again in ' . ceil($wait / 60) . ' minutes');
+}
 
 try {
   switch ($action) {

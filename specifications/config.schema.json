@@ -82,6 +82,13 @@
       "default": 5000,
       "description": "Most episodes read from one feed, the first ones in feed order (usually the newest)."
     },
+    "max_requests_per_hour": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 100000,
+      "default": 300,
+      "description": "API requests per IP address per hour without a session (search, lookup, episodes, …)."
+    },
     "max_document_bytes": {
       "type": "integer",
       "minimum": 1024,

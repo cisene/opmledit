@@ -130,12 +130,22 @@ out.
 | Failed sign-ins | 10 per 15 minutes | IP |
 | Failed sign-ins | 5 per 15 minutes | email address (hashed with HMAC, not stored in clear) |
 | Account creations | 5 per hour | IP |
-| Stateless requests without a session (`parse`, `render`, `search`, `lookup`, `episodes`) | 300 per hour | IP |
+| Requests without a session (`parse`, `new`, `render`, `search`, `categories`, `lookup`, `lookup_batch`, `episodes`) | 300 per hour (`max_requests_per_hour`, [config.md](config.md#max_requests_per_hour)) | IP |
 | `parse` from a URL without a session | 30 per hour | IP |
 
-Over the limit: `429`. Counters are small files in `data/ratelimit/`, removed
-after their window. Every login request costs a key derivation, so the limits
-also protect the server's CPU and memory.
+Over the limit: `429` with `Retry-After`. Counters are small files in
+`data/ratelimit/`, one per limit and client, named by a SHA-256 hash so no
+address or email address is stored in clear. Each holds the start of its
+one-hour (or 15-minute) window and a count. Files whose window has ended
+are removed now and then by a request. Every login request costs a key
+derivation, so the limits also protect the server's CPU and memory.
+
+- The client is `REMOTE_ADDR`; `X-Forwarded-For` is not trusted, as anyone
+  can set it. Behind a reverse proxy, the web server must put the real
+  client address in `REMOTE_ADDR` (Apache `mod_remoteip`).
+- IPv6 addresses are counted per /64 network, as one connection usually
+  gets a whole /64.
+- If `data/ratelimit` cannot be written, nothing is counted.
 
 ## Configuration
 
