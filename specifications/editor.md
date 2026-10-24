@@ -184,6 +184,24 @@ Opening a node shows all its attributes.
   - Dead
   - Moved — with a button to replace `xmlUrl` with the new URL
 - Results are shown in the tree and details; they are not stored.
+
+## Episodes
+
+For `rss` outlines with an `xmlUrl`, **Episodes** in the outline details
+opens the feed's episodes ([episodes.md](episodes.md)), fetched on first
+open.
+
+- Header: number of episodes ("209 episodes", or "first 5000 shown"), a
+  filter box and **Refresh**, which asks the feed's server again.
+- Each episode: date, title (linking to the audio, else the episode page),
+  season and episode number, duration, type when not `full`, and labels for
+  the Podcasting 2.0 tags it has (transcript, chapters, value, people,
+  soundbites, alternate media, location, comments, license). The description
+  is the title's tooltip.
+- The filter matches title and description, locally.
+- Notes under the header: the repairs made, a redirect to another URL, and
+  when the copy is stale, why and from when.
+- Episodes are not part of the OPML document.
 - **Fill from PodcastIndex** also offers to set `podcast:guid` and
   `podcast:medium` ([opml-model.md](opml-model.md#podcasting-20-namespace)).
 - Outline details show `podcast:` attributes in their own group, after the

@@ -81,6 +81,19 @@ Single feed lookups by podcast guid, feed URL or PodcastIndex id, including
 the answer "not known". *Check all feeds* uses the same entries. A feed's
 dead or moved status can be this old when checked.
 
+#### `cache_seconds.episodes`
+
+| Default | Range | Unit |
+|---------|-------|------|
+| 3600 (1 hour) | 0 – 2592000 | seconds |
+
+A feed's own content, fetched for its episodes ([episodes.md](episodes.md)).
+Within this time an opened feed is shown from the cache. After it, the
+feed's server is asked again with `If-None-Match` / `If-Modified-Since`, so
+an unchanged feed is not downloaded again. The cached copy is also kept
+past this time, to show when the feed cannot be fetched. With `0` nothing
+is stored, and every opening fetches the feed.
+
 #### `cache_seconds.categories`
 
 | Default | Range | Unit |
@@ -109,8 +122,9 @@ limit are refused with `413`. PHP's own `upload_max_filesize` and
 |---------|-------|------|
 | 15 | 1 – 120 | seconds |
 
-Longest time an import from URL may take, connecting and downloading
-together, including redirects.
+Longest time fetching a URL may take, connecting and downloading together,
+including redirects: an import from URL, or a feed fetched for its
+episodes.
 
 #### `max_url_imports_per_hour`
 
@@ -120,6 +134,28 @@ together, including redirects.
 
 Imports from URL per signed-in user per hour. Over the limit: `429`.
 Signed out, the per-IP limits in [auth.md](auth.md#rate-limits) apply.
+
+### Feeds
+
+#### `max_feed_bytes`
+
+| Default | Range | Unit |
+|---------|-------|------|
+| 20971520 (20 MB) | 1048576 – 104857600 (1 – 100 MB) | bytes |
+
+Largest feed downloaded for its episodes, counted after decompression.
+Long-running shows with full show notes can pass 10 MB. Larger feeds are
+refused (`502 feed_unreachable`), or the cached copy is shown.
+
+#### `max_episodes`
+
+| Default | Range | Unit |
+|---------|-------|------|
+| 5000 | 1 – 50000 | episodes |
+
+Most episodes read from one feed: the first ones in feed order, which is
+usually newest first. The answer says how many the feed has, and the page
+shows "first N shown". Each episode takes about 1–5 KB in the cache.
 
 ### Documents
 

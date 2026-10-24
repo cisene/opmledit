@@ -31,6 +31,13 @@
           "default": 3600,
           "description": "Seconds a single feed lookup by guid, URL or id is reused, including \"not found\"; also used by Check all feeds. 0: not cached."
         },
+        "episodes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2592000,
+          "default": 3600,
+          "description": "Seconds a feed's fetched episodes are reused before the feed is asked again (with ETag / Last-Modified, so an unchanged feed is not downloaded). 0: not cached."
+        },
         "categories": {
           "type": "integer",
           "minimum": 0,
@@ -52,7 +59,7 @@
       "minimum": 1,
       "maximum": 120,
       "default": 15,
-      "description": "Seconds an import from URL may take in total."
+      "description": "Seconds fetching a URL may take in total (import from URL, a feed's episodes)."
     },
     "max_url_imports_per_hour": {
       "type": "integer",
@@ -60,6 +67,20 @@
       "maximum": 1000,
       "default": 30,
       "description": "Imports from URL per signed-in user per hour."
+    },
+    "max_feed_bytes": {
+      "type": "integer",
+      "minimum": 1048576,
+      "maximum": 104857600,
+      "default": 20971520,
+      "description": "Largest feed in bytes downloaded for its episodes."
+    },
+    "max_episodes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50000,
+      "default": 5000,
+      "description": "Most episodes read from one feed, the first ones in feed order (usually the newest)."
     },
     "max_document_bytes": {
       "type": "integer",

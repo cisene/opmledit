@@ -19,6 +19,7 @@ opml.org are the reference (see [opml-model.md](opml-model.md)).
 | [editor.md](editor.md) | Editor user interface and workflows |
 | [security.md](security.md) | Access model, input handling, file system protection |
 | [admin.md](admin.md) | Which email addresses may use the service, and the settings page |
+| [episodes.md](episodes.md) | Fetching a feed's episodes on demand: repair of broken feeds, RSS and Atom, namespaces, Podcasting 2.0 |
 | [config.md](config.md) | Every setting in `data/config.json`: meaning, default, range |
 | [config.schema.json](config.schema.json) | JSON Schema for `data/config.json` (normative) |
 

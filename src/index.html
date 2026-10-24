@@ -99,8 +99,27 @@
         <button class="up" title="Move up">↑</button>
         <button class="down" title="Move down">↓</button>
         <button class="lookup" title="Check against PodcastIndex">Check</button>
+        <button class="show-episodes" title="Show the feed's episodes" aria-expanded="false">Episodes</button>
         <button class="remove danger" title="Remove">✕</button>
       </div>
+      <div class="episodes" hidden>
+        <div class="episodes-head">
+          <span class="episodes-info muted"></span>
+          <input type="search" class="episodes-filter" placeholder="Filter episodes" aria-label="Filter episodes">
+          <button class="episodes-refresh" title="Fetch the feed again">Refresh</button>
+        </div>
+        <p class="episodes-notes muted"></p>
+        <ol class="episode-list"></ol>
+      </div>
+    </li>
+  </template>
+
+  <template id="episode-tpl">
+    <li class="episode">
+      <span class="date muted"></span>
+      <a class="title" target="_blank" rel="noopener noreferrer"></a>
+      <span class="meta muted"></span>
+      <span class="tags"></span>
     </li>
   </template>
 

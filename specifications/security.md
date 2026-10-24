@@ -48,8 +48,9 @@ identifies the user, and is stated at account creation.
 
 ## Fetching URLs
 
-Import from URL makes the server fetch a URL a user typed. To keep it from
-being used to reach the server's own network or other internal services:
+Import from URL and a feed's episodes ([episodes.md](episodes.md)) make the
+server fetch a URL a user typed. To keep it from being used to reach the
+server's own network or other internal services (`src/lib/UrlFetcher.php`):
 
 - Only `http` and `https`, ports 80 and 443, no user name or password in
   the URL, max 2048 characters.
@@ -59,12 +60,14 @@ being used to reach the server's own network or other internal services:
   the address that was checked (curl `CURLOPT_RESOLVE`), so DNS cannot
   change it in between.
 - At most 3 redirects, each one checked the same way.
-- Download stops at `max_upload_bytes` (counted after decompression) and
-  after `fetch_timeout` seconds.
+- Download stops at `max_upload_bytes` for import, `max_feed_bytes` for
+  episodes (counted after decompression), and after `fetch_timeout` seconds
+  in total.
 - No cookies and no credentials are sent. The user agent is the
   configured one.
-- The response's `Content-Type` is ignored; the content goes through the
-  same parsing and repair as an uploaded file.
+- The response's `Content-Type` is ignored, except its charset for feeds;
+  the content goes through the same parsing and repair as an uploaded file,
+  or the feed repair ([episodes.md](episodes.md#repair)).
 - Rate limit: `max_url_imports_per_hour` per user.
 
 ## XML parsing

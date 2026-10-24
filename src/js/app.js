@@ -10,6 +10,7 @@
   const resultsEl = $('#results');
   const feedTpl = $('#feed-tpl');
   const resultTpl = $('#result-tpl');
+  const episodeTpl = $('#episode-tpl');
   const PODCAST_NS = 'https://podcastindex.org/namespace/1.0';
 
   // Last search, kept so the results filter and Add all work without a new request
@@ -214,6 +215,90 @@
     }
   }
 
+  // --- episodes ----------------------------------------------------------
+
+  // Podcasting 2.0 tags worth pointing out on an episode
+  const EPISODE_TAGS = { 'podcast:transcript': 'transcript', 'podcast:chapters': 'chapters', 'podcast:value': 'value',
+    'podcast:person': 'people', 'podcast:soundbite': 'soundbites', 'podcast:alternateEnclosure': 'alternate media',
+    'podcast:location': 'location', 'podcast:socialInteract': 'comments', 'podcast:license': 'license' };
+
+  function duration(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+  }
+
+  function episodeItem(ep) {
+    const li = episodeTpl.content.firstElementChild.cloneNode(true);
+    li.querySelector('.date').textContent = ep.published ? new Date(ep.published * 1000).toLocaleDateString() : '';
+    const title = li.querySelector('.title');
+    title.textContent = ep.title || '(no title)';
+    const href = ep.enclosureUrl || ep.link;
+    if (href) title.href = href; else title.removeAttribute('href');
+    if (ep.description) title.title = ep.description;
+    const meta = [];
+    if (ep.season) meta.push('S' + ep.season);
+    if (ep.episode) meta.push('E' + ep.episode);
+    if (ep.duration) meta.push(duration(ep.duration));
+    if (ep.episodeType && ep.episodeType !== 'full') meta.push(ep.episodeType);
+    li.querySelector('.meta').textContent = meta.join(' · ');
+    const tags = li.querySelector('.tags');
+    for (const name of Object.keys(ep.extensions || {})) {
+      if (EPISODE_TAGS[name]) {
+        const tag = document.createElement('span');
+        tag.textContent = EPISODE_TAGS[name];
+        tags.appendChild(tag);
+      }
+    }
+    return li;
+  }
+
+  function renderEpisodes(li, data) {
+    const term = li.querySelector('.episodes-filter').value.trim().toLowerCase();
+    const shown = term
+      ? data.episodes.filter((ep) => (ep.title + ' ' + (ep.description || '')).toLowerCase().includes(term))
+      : data.episodes;
+    li.querySelector('.episode-list').replaceChildren(...shown.map(episodeItem));
+
+    let info = data.episodeCount + ' episode' + (data.episodeCount === 1 ? '' : 's');
+    if (data.episodes.length < data.episodeCount) info += ', first ' + data.episodes.length + ' shown';
+    if (term) info = shown.length + ' of ' + info;
+    li.querySelector('.episodes-info').textContent = info;
+
+    const notes = [];
+    if (data.stale) notes.push('Could not fetch the feed (' + data.error + '); showing the copy from ' + new Date(data.fetched * 1000).toLocaleString() + '.');
+    if (data.fetchedFrom !== data.url) notes.push('Redirected to ' + data.fetchedFrom + '.');
+    if (data.repairs.length) notes.push('Repaired: ' + data.repairs.join('; ') + '.');
+    const el = li.querySelector('.episodes-notes');
+    el.textContent = notes.join(' ');
+    el.className = 'episodes-notes ' + (data.stale ? 'warn' : 'muted');
+  }
+
+  async function loadEpisodes(feed, li, refresh) {
+    const info = li.querySelector('.episodes-info');
+    info.textContent = 'Fetching episodes…';
+    li.querySelector('.episode-list').replaceChildren();
+    li.querySelector('.episodes-notes').textContent = '';
+    try {
+      const params = { action: 'episodes', url: feed.xmlUrl };
+      if (refresh) params.refresh = '1';
+      const data = await api(params);
+      li.episodes = data;
+      renderEpisodes(li, data);
+    } catch (e) {
+      info.textContent = e.message;
+    }
+  }
+
+  function toggleEpisodes(feed, li) {
+    const panel = li.querySelector('.episodes');
+    const button = li.querySelector('.show-episodes');
+    panel.hidden = !panel.hidden;
+    button.setAttribute('aria-expanded', String(!panel.hidden));
+    if (!panel.hidden && !li.episodes) loadEpisodes(feed, li);
+  }
+
   // --- rendering ---------------------------------------------------------
 
   function render() {
@@ -249,6 +334,9 @@
       down.addEventListener('click', () => move(i, 1));
 
       li.querySelector('.lookup').addEventListener('click', () => checkFeed(feed, li));
+      li.querySelector('.show-episodes').addEventListener('click', () => toggleEpisodes(feed, li));
+      li.querySelector('.episodes-refresh').addEventListener('click', () => loadEpisodes(feed, li, true));
+      li.querySelector('.episodes-filter').addEventListener('input', () => { if (li.episodes) renderEpisodes(li, li.episodes); });
       li.querySelector('.remove').addEventListener('click', () => {
         state.feeds.splice(i, 1);
         save();

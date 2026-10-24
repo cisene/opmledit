@@ -6,6 +6,7 @@ include_once "config.php";
 require_once __DIR__ . '/lib/PodcastIndexApi.php';
 require_once __DIR__ . '/lib/FeedSearch.php';
 require_once __DIR__ . '/lib/Config.php';
+require_once __DIR__ . '/lib/FeedReader.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -45,7 +46,8 @@ if ($method !== 'GET') {
 
 try {
   $config = Config::load($config);
-  $api = PodcastIndexApi::fromConfig($config, new FileCache($config['data_dir'] . '/cache'));
+  $cache = new FileCache($config['data_dir'] . '/cache');
+  $api = PodcastIndexApi::fromConfig($config, $cache);
 } catch (InvalidArgumentException | RuntimeException $e) {
   fail(500, 'config', 'Configuration error: ' . $e->getMessage());
 }
@@ -82,6 +84,25 @@ try {
         fail(400, 'bad_request', 'Invalid feed URL');
       }
       respond(200, array('feed' => $api->feedByUrl($url)));
+
+    case 'episodes':
+      $url = trim($_GET['url'] ?? '');
+      if (!validFeedUrl($url)) {
+        fail(400, 'bad_request', 'Invalid feed URL');
+      }
+      $reader = new FeedReader(
+        new UrlFetcher((string)$config['user_agent'], $config['max_feed_bytes'], $config['fetch_timeout']),
+        $config['cache_seconds']['episodes'] > 0 ? new FeedStore($cache) : null,
+        $config['cache_seconds']['episodes'],
+        $config['max_episodes'],
+      );
+      try {
+        respond(200, $reader->read($url, !empty($_GET['refresh'])));
+      } catch (FetchException $e) {
+        fail(502, 'feed_unreachable', $e->getMessage());
+      } catch (InvalidArgumentException $e) {
+        fail(422, 'invalid_feed', $e->getMessage());
+      }
 
     case 'lookup_batch':
       if ($method !== 'POST') {

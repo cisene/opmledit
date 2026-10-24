@@ -11,11 +11,12 @@ final class FileCache {
   }
 
   /**
+   * @param ?int $maxAge seconds, or null for an entry of any age
    * @return ?array ['value' => …] when there is an entry younger than $maxAge seconds, else null
    */
-  public function get(string $name, int $maxAge): ?array {
+  public function get(string $name, ?int $maxAge = null): ?array {
     $file = $this->file($name);
-    if (!is_file($file) || filemtime($file) <= time() - $maxAge) {
+    if (!is_file($file) || ($maxAge !== null && filemtime($file) <= time() - $maxAge)) {
       return null;
     }
     $entry = json_decode((string)@file_get_contents($file), true);

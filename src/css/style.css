@@ -151,6 +151,19 @@ select {
 .feed .url, .result .url { font-size: 0.85em; }
 .result .url { overflow-wrap: anywhere; }
 .check { font-size: 0.85em; }
+
+.feed { flex-wrap: wrap; }
+.episodes { width: 100%; padding-left: 58px; box-sizing: border-box; }
+.episodes-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.episodes-head input { flex: 1; min-width: 120px; }
+.episodes-notes { font-size: 0.85em; margin: 4px 0; }
+.episodes-notes:empty { display: none; }
+.episode-list { list-style: none; margin: 4px 0 0; padding: 0; max-height: 420px; overflow-y: auto; }
+.episode { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 4px 0; border-top: 1px solid var(--border); font-size: 0.9em; }
+.episode .date { flex: none; width: 6.5em; font-variant-numeric: tabular-nums; }
+.episode .title { flex: 1; min-width: 12em; overflow-wrap: anywhere; }
+.episode .meta { font-size: 0.9em; }
+.episode .tags span { display: inline-block; margin-left: 4px; padding: 0 5px; border: 1px solid var(--border); border-radius: 3px; font-size: 0.8em; color: var(--muted); }
 .check button { padding: 1px 6px; font-size: 0.9em; }
 
 .muted { color: var(--muted); }
@@ -175,6 +188,6 @@ select {
 #status.error { background: var(--error); color: #fff; }
 
 @media (max-width: 520px) {
-  .feed { flex-wrap: wrap; }
+  .episodes { padding-left: 0; }
   .feed .actions { width: 100%; justify-content: flex-end; }
 }

@@ -34,6 +34,8 @@ except export.
 | 500 | `config` / `storage` | Server side problem |
 | 502 | `upstream` | PodcastIndex request failed |
 | 502 | `fetch_failed` | Import from URL: the URL could not be fetched |
+| 502 | `feed_unreachable` | Episodes: the feed could not be fetched and nothing is cached |
+| 422 | `invalid_feed` | Episodes: the content is not an RSS or Atom feed and nothing is cached |
 
 ## Account
 
@@ -243,6 +245,40 @@ When a PodcastIndex feed is added, the outline gets:
 The `podcast:` attributes follow
 [opml-model.md](opml-model.md#podcasting-20-namespace).
 
+### Episodes
+
+`GET api.php?action=episodes&url=<feed url>[&refresh=1]`
+
+Fetches the feed itself, not PodcastIndex, and returns its channel and
+episodes. The rules for fetching, repair, parsing and caching are in
+[episodes.md](episodes.md).
+
+`200` →
+
+```json
+{
+  "url": "https://feeds.example.org/show.xml",
+  "fetchedFrom": "https://feeds.example.org/show.xml",
+  "fetched": 1793000000,
+  "stale": false,
+  "repairs": ["Converted from ISO-8859-1"],
+  "channel": { "title": "…", "extensions": { … } },
+  "episodes": [ <Episode>, … ],
+  "episodeCount": 209
+}
+```
+
+- `fetched`: when the content was fetched or last confirmed unchanged (Unix
+  seconds).
+- `stale: true` with `error`: the feed could not be fetched or read now;
+  the cached copy from `fetched` is returned.
+- `episodes` holds at most `max_episodes`; `episodeCount` is the number in
+  the feed.
+- Errors without a cached copy: `400 bad_request` (not an http(s) URL),
+  `502 feed_unreachable` (refused address, timeout, too large, HTTP error),
+  `422 invalid_feed`.
+- It is a stateless endpoint ([rate limits](auth.md#rate-limits) apply).
+
 ## Limits
 
 Settings in `data/config.json`, each described in [config.md](config.md). Defaults:
@@ -257,3 +293,5 @@ Settings in `data/config.json`, each described in [config.md](config.md). Defaul
 | `max_depth` | 32 | Nesting depth |
 | `max_documents_per_user` | 200 | `create` and `import` |
 | `podcastindex_max_results` | 1000 | Results per PodcastIndex search |
+| `max_feed_bytes` | 20 MB | Feed download for episodes |
+| `max_episodes` | 5000 | Episodes read from one feed |

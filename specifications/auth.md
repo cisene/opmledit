@@ -130,7 +130,7 @@ out.
 | Failed sign-ins | 10 per 15 minutes | IP |
 | Failed sign-ins | 5 per 15 minutes | email address (hashed with HMAC, not stored in clear) |
 | Account creations | 5 per hour | IP |
-| Stateless requests without a session (`parse`, `render`, `search`, `lookup`) | 300 per hour | IP |
+| Stateless requests without a session (`parse`, `render`, `search`, `lookup`, `episodes`) | 300 per hour | IP |
 | `parse` from a URL without a session | 30 per hour | IP |
 
 Over the limit: `429`. Counters are small files in `data/ratelimit/`, removed

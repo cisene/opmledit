@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/Feed.php';
-require_once __DIR__ . '/FileCache.php';
+require_once __DIR__ . '/FeedStore.php';
 
 class PodcastIndexException extends RuntimeException {}
 
@@ -9,6 +9,8 @@ class PodcastIndexException extends RuntimeException {}
  * Client for the PodcastIndex.org API, see https://podcastindex-org.github.io/docs-api/
  */
 class PodcastIndexApi {
+
+  private ?FeedStore $feeds;
 
   public function __construct(
     private string $baseUrl,
@@ -30,6 +32,7 @@ class PodcastIndexApi {
       throw new InvalidArgumentException('User agent is required');
     }
     $this->baseUrl = rtrim($baseUrl, '/');
+    $this->feeds = $cache !== null && ($cacheSeconds['feeds'] ?? 0) > 0 ? new FeedStore($cache) : null;
   }
 
   public static function fromConfig(array $config, ?FileCache $cache = null): self {
@@ -143,19 +146,31 @@ class PodcastIndexApi {
   }
 
   public function feedByUrl(string $url): ?Feed {
-    return $this->cachedFeed('url/' . hash('sha256', $url), fn() => $this->request('/podcasts/byfeedurl', array('url' => $url)));
+    $hit = $this->feeds?->record($url, $this->cacheSeconds['feeds']);
+    if ($hit !== null) {
+      return self::toFeed($hit['record']);
+    }
+    $record = self::record($this->request('/podcasts/byfeedurl', array('url' => $url)));
+    $this->remember($record, url: $url);
+    return self::toFeed($record);
   }
 
   public function feedById(int $id): ?Feed {
-    return $this->cachedFeed('id/' . $id, fn() => $this->request('/podcasts/byfeedid', array('id' => $id)));
+    return self::toFeed(self::record($this->request('/podcasts/byfeedid', array('id' => $id))));
   }
 
   public function feedByGuid(string $guid): ?Feed {
-    return $this->cachedFeed(self::guidName($guid), fn() => $this->request('/podcasts/byguid', array('guid' => $guid)));
+    $hit = $this->cachedByGuid($guid);
+    if ($hit !== null) {
+      return self::toFeed($hit['record']);
+    }
+    $record = self::record($this->request('/podcasts/byguid', array('guid' => $guid)));
+    $this->remember($record, guid: $guid);
+    return self::toFeed($record);
   }
 
   public function feedByItunesId(int $itunesId): ?Feed {
-    return $this->cachedFeed('itunes/' . $itunesId, fn() => $this->request('/podcasts/byitunesid', array('id' => $itunesId)));
+    return self::toFeed(self::record($this->request('/podcasts/byitunesid', array('id' => $itunesId))));
   }
 
   /**
@@ -165,15 +180,14 @@ class PodcastIndexApi {
    * @return array<string, Feed> by requested guid; guids not found are missing
    */
   public function feedsByGuids(array $guids): array {
-    $cache = $this->cacheFor('feeds');
     $found = array();
     $missing = array();
     foreach (array_unique($guids) as $guid) {
-      $entry = $cache?->get('feeds/' . self::guidName($guid), $this->cacheSeconds['feeds']);
-      if ($entry === null) {
+      $hit = $this->cachedByGuid($guid);
+      if ($hit === null) {
         $missing[] = $guid;
-      } elseif ($entry['value'] !== null) {
-        $found[$guid] = self::toFeed($entry['value']);
+      } else {
+        $found[$guid] = self::toFeed($hit['record']);
       }
     }
     if (!$missing) {
@@ -188,23 +202,49 @@ class PodcastIndexApi {
       }
     }
     foreach ($missing as $guid) {
-      $data = $byGuid[strtolower($guid)] ?? null;
-      $cache?->set('feeds/' . self::guidName($guid), $data);
-      $found[$guid] = $data === null ? null : self::toFeed($data);
+      $record = $byGuid[strtolower($guid)] ?? null;
+      $this->remember($record, guid: $guid);
+      $found[$guid] = self::toFeed($record);
     }
     return array_filter($found);
   }
 
   /**
-   * Caches the raw PodcastIndex record, or null when the feed is not known.
+   * @return ?array ['record' => ?array] when the cache knows the guid and its feed
    */
-  private function cachedFeed(string $name, callable $fetch): ?Feed {
-    $data = $this->cached('feeds/' . $name, 'feeds', function () use ($fetch) {
-      // Lookups return an empty array for "feed" when nothing matches
-      $data = $fetch()['feed'] ?? null;
-      return is_array($data) && isset($data['id']) ? $data : null;
-    });
-    return $data === null ? null : Feed::fromPodcastIndex($data);
+  private function cachedByGuid(string $guid): ?array {
+    $known = $this->feeds?->guid($guid, $this->cacheSeconds['feeds']);
+    if ($known === null) {
+      return null;
+    }
+    return $known['url'] === null ? array('record' => null) : $this->feeds->record($known['url'], $this->cacheSeconds['feeds']);
+  }
+
+  /**
+   * Stores a lookup answer under the URL asked for, the URL PodcastIndex gives
+   * (they differ when a feed moved) and the guid.
+   */
+  private function remember(?array $record, ?string $url = null, ?string $guid = null): void {
+    if ($this->feeds === null) {
+      return;
+    }
+    $current = $record === null ? null : (string)$record['url'];
+    if ($url !== null) {
+      $this->feeds->setRecord($url, $record);
+    }
+    if ($current !== null && $current !== $url) {
+      $this->feeds->setRecord($current, $record);
+    }
+    $guid ??= $record['podcastGuid'] ?? null;
+    if ($guid !== null && $guid !== '') {
+      $this->feeds->setGuid($guid, $current);
+    }
+  }
+
+  // Lookups return an empty array for "feed" when nothing matches
+  private static function record(array $res): ?array {
+    $data = $res['feed'] ?? null;
+    return is_array($data) && isset($data['id'], $data['url']) ? $data : null;
   }
 
   /**
@@ -224,11 +264,10 @@ class PodcastIndexApi {
     return ($this->cacheSeconds[$kind] ?? 0) > 0 ? $this->cache : null;
   }
 
-  private static function guidName(string $guid): string {
-    return 'guid/' . (preg_match('/^[0-9a-f-]{1,64}$/i', $guid) ? strtolower($guid) : hash('sha256', $guid));
-  }
-
-  private static function toFeed(array $data): ?Feed {
+  private static function toFeed(?array $data): ?Feed {
+    if ($data === null) {
+      return null;
+    }
     try {
       return Feed::fromPodcastIndex($data);
     } catch (InvalidArgumentException $e) {

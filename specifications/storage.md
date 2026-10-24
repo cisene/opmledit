@@ -25,12 +25,11 @@ data/
         <id>.json              one file per document
   sessions/                    PHP session files
   ratelimit/                   rate limit counters
-  cache/                       PodcastIndex answers, see "Cache" below
+  cache/                       PodcastIndex answers and feeds, see "Cache" below
     categories/list.json       category list
     search/<sha256>.json       one search, named by a hash of the request
-    feeds/guid/<guid>.json     one feed lookup by podcast guid
-    feeds/url/<sha256>.json    one feed lookup by feed URL
-    feeds/id/<id>.json         one feed lookup by PodcastIndex id
+    feeds/<sha256>.json        one feed, named by a hash of its URL: PodcastIndex record and episodes
+    feeds/guid/<guid>.json     podcast guid → feed URL, from PodcastIndex
   admin/
     access.json                allowed and denied email addresses, see admin.md
   config.json                  settings, see config.md
@@ -57,20 +56,27 @@ no email address is stored in a user folder.
 
 ## Cache
 
-PodcastIndex answers are kept in `data/cache` and reused until they are
-older than `cache_seconds` ([config.md](config.md#cache)):
+PodcastIndex answers and fetched feeds are kept in `data/cache` and reused
+until they are older than `cache_seconds` ([config.md](config.md#cache)):
 
 | Folder | Default | Holds |
 |--------|---------|-------|
 | `search/` | 4 hours | the raw answer of one search call (all modes, each tag page) |
-| `feeds/` | 1 hour | the raw feed record of one lookup, or `null` when PodcastIndex does not know the feed |
+| `feeds/` | 1 hour (`feeds`), 1 hour (`episodes`) | one file per feed URL with two parts, each with its own time (`at`): `podcastindex`, the raw PodcastIndex record or `null` when PodcastIndex does not know the feed; `content`, the feed's channel and episodes ([episodes.md](episodes.md#cache)) |
+| `feeds/guid/` | 1 hour (`feeds`) | the feed URL PodcastIndex gives for a podcast guid, or `null` |
 | `categories/` | 1 day | the category list |
 
 - Each file is `{ "value": … }`, written atomically (temp file and
-  rename). Its modification time is its age.
+  rename). Its modification time is its age, except for the parts of a
+  feed file, which carry their own time.
+- A lookup is stored under the URL asked for and, when PodcastIndex gives
+  another (a moved feed), under that one too.
+- Two requests updating the same feed file at once can lose one part; it
+  is fetched again on the next request.
 - The batch lookup (`lookup_batch`) reads and writes the same per-guid
   files, and only asks PodcastIndex for the guids it has no fresh entry for.
-- Errors from PodcastIndex are not cached.
+- Errors from PodcastIndex are not cached. A feed that cannot be fetched
+  keeps its last good content.
 - Search filters applied by this server are not part of the cache name;
   they run on the cached answer.
 - The cache is optional: if `data/cache` cannot be written, every request
