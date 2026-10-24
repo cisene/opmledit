@@ -1,0 +1,16 @@
+# Pages are static files, so their security headers come from the web server
+# (see specifications/security.md). Other servers need the same headers.
+
+DirectoryIndex index.html
+
+<FilesMatch "^config(\.sample)?\.php$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header always set Referrer-Policy "no-referrer"
+  Header always set X-Robots-Tag "noindex"
+  <FilesMatch "\.html$">
+    Header always set Content-Security-Policy "default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'"
+  </FilesMatch>
+</IfModule>

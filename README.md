@@ -9,4 +9,8 @@ OPML Edit - PodcastIndex.org as backend
    `config.php`, not in the code.
 3. Requires PHP 8.2+ with the curl extension.
 
+Pages (`index.html`, CSS, JavaScript) are static; PHP is only the backend
+(`api.php`, `lib/`). On Apache, `src/.htaccess` sets the security headers;
+other web servers need the same headers, see `specifications/security.md`.
+
 Local development: `php -S localhost:8000 -t src`

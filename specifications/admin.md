@@ -41,14 +41,14 @@ This is accepted, because the users are known to the admin.
 
 - `bin/admin-password.php` asks for a password and prints the
   `password_hash(..., PASSWORD_ARGON2ID)` line for `config.php`.
-- If the hash is empty, the admin page answers `404`.
+- If the hash is empty, the admin API answers `404` to everything.
 - The admin has its own session cookie (`<session_cookie>_admin`), with
   the same CSRF and `Origin` checks and sign-in rate limit as users
   ([auth.md](auth.md#rate-limits)).
 
 ## Admin page
 
-`src/admin.php` with `src/js/admin.js`: a password form, then a single
+`src/admin.html` with `src/js/admin.js`, static like the editor: a password form, then a single
 table of email addresses with state and note. Add an address, switch
 between allowed and denied, edit the note, remove it.
 

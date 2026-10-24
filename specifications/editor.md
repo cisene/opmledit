@@ -1,6 +1,8 @@
 # Editor
 
-A single page, `src/index.php`, plain PHP serving vanilla JavaScript.
+A single static page, `src/index.html`, with vanilla JavaScript (`src/js/`)
+and CSS (`src/css/`). It talks to the server only through `api.php`
+([api.md](api.md)); no PHP is involved in the page itself.
 
 ## Pages / states
 

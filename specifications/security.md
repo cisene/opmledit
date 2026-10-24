@@ -26,8 +26,9 @@ only reach documents in their own folder; there is no sharing.
   Request logging must exclude bodies of `register`, `login`,
   `change_password`, `change_email`, `delete_account`, and the admin
   `login`.
-- Pages and API send `Referrer-Policy: no-referrer`, and pages send
-  `X-Robots-Tag: noindex`.
+- Pages and API send `Referrer-Policy: no-referrer` and
+  `X-Robots-Tag: noindex`. The API sets its headers in PHP. The pages are
+  static, so the web server sets theirs (`src/.htaccess` for Apache).
 
 ### Known limitation
 
@@ -56,7 +57,7 @@ identifies the user, and is stated at account creation.
 
 - The browser renders all document content with `textContent` / form field
   values, never `innerHTML`.
-- Content-Security-Policy on the page:
+- Content-Security-Policy on the pages (set by the web server):
   `default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'`.
   Artwork comes from arbitrary hosts, hence `img-src https:`.
 - Export sets `Content-Disposition: attachment` and a sanitized file name.

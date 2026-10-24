@@ -20,6 +20,27 @@ opml.org are the reference (see [opml-model.md](opml-model.md)).
 | [security.md](security.md) | Access model, input handling, file system protection |
 | [admin.md](admin.md) | Which email addresses may use the service |
 
+## Code layout
+
+PHP is the backend only. It never produces HTML; pages are static files.
+
+```
+src/                       web server document root
+  index.html, admin.html   static pages
+  css/, js/                stylesheets and vanilla JavaScript
+  api.php, admin-api.php   PHP endpoints, JSON (and the OPML export file)
+  lib/                     PHP classes
+  config.php               settings (not in git)
+bin/                       PHP command line scripts (purge, admin password)
+```
+
+- HTML, CSS and JavaScript contain no PHP, and PHP contains no HTML, CSS or
+  JavaScript.
+- Anything the page needs from the server (signed-in user, retention days,
+  CSRF token) comes from the API, e.g. `me`.
+- Security headers for the static pages come from the web server; `src/.htaccess`
+  sets them for Apache ([security.md](security.md#output)).
+
 ## Scope
 
 Users sign in with email address and password; each user sees only their own
@@ -73,6 +94,7 @@ use the service. Everyone else is refused.
 | D9 | All hostnames, URLs, paths and limits live in `config.php` | They may change; nothing host specific in code |
 | D10 | The application never sends mail | Not needed: the email address is only an identifier. No mail configuration |
 | D11 | Only email addresses the admin has allowed can use the service; not verified | An open service gets misused; users are known to the admin personally |
+| D12 | PHP only in `api.php`, `admin-api.php`, `lib/` and `bin/`; pages are static HTML, CSS and JS | Clear separation of backend and frontend; pages can be cached and edited without touching PHP |
 
 ## Glossary
 
