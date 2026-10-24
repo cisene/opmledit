@@ -18,7 +18,9 @@ opml.org are the reference (see [opml-model.md](opml-model.md)).
 | [api.md](api.md) | HTTP API between browser and server |
 | [editor.md](editor.md) | Editor user interface and workflows |
 | [security.md](security.md) | Access model, input handling, file system protection |
-| [admin.md](admin.md) | Which email addresses may use the service |
+| [admin.md](admin.md) | Which email addresses may use the service, and the settings page |
+| [config.md](config.md) | Every setting in `data/config.json`: meaning, default, range |
+| [config.schema.json](config.schema.json) | JSON Schema for `data/config.json` (normative) |
 
 ## Code layout
 
@@ -30,7 +32,8 @@ src/                       web server document root
   css/, js/                stylesheets and vanilla JavaScript
   api.php, admin-api.php   PHP endpoints, JSON (and the OPML export file)
   lib/                     PHP classes
-  config.php               settings (not in git)
+  config.php               secrets, site URL, data_dir (not in git)
+specifications/            these documents; config.schema.json is read by the server
 bin/                       PHP command line scripts (purge, admin password)
 ```
 
@@ -101,7 +104,7 @@ have an account. Signed out use is open to everyone, with per-IP limits
 | D6 | Optimistic locking with a `revision` number | Two open tabs cannot silently overwrite each other |
 | D7 | Opening a document renews its expiry, saving also updates `modified` | "Touched" means used, not only changed |
 | D8 | Purge runs from cron, with an opportunistic daily fallback | Works on hosts without cron access |
-| D9 | All hostnames, URLs, paths and limits live in `config.php` | They may change; nothing host specific in code |
+| D9 | Hostnames, URLs, paths and secrets live in `config.php`; limits and cache times in `data/config.json` | They may change; nothing host specific in code, and tweaking a limit needs no PHP edit |
 | D10 | The application never sends mail | Not needed: the email address is only an identifier. No mail configuration |
 | D11 | Only email addresses the admin has allowed can use the service; not verified | An open service gets misused; users are known to the admin personally |
 | D12 | PHP only in `api.php`, `admin-api.php`, `lib/` and `bin/`; pages are static HTML, CSS and JS | Clear separation of backend and frontend; pages can be cached and edited without touching PHP |

@@ -185,9 +185,9 @@ results, at most 1000, so the server always asks for 1000. `tag` pages with
 more. In every mode the server stops at `podcastindex_max_results` (default
 1000) and says so in `truncated`.
 
-**Filters**, optional, for every mode. PodcastIndex supports them only on some
-calls, so the server applies them to the results itself, which works
-everywhere:
+**Filters**, optional. PodcastIndex supports them only on some calls, so the
+server applies them to the results itself, which works in every mode (except
+`val`, see the table):
 
 | Parameter | Keeps feeds |
 |-----------|-------------|
@@ -196,7 +196,7 @@ everywhere:
 | `lang` | with one of these languages (`en,sv`; `unknown` for none given), matching `en` also `en-US` |
 | `medium` | with this medium |
 | `clean` | not marked explicit |
-| `val` | with a `podcast:value` block (`any`, or `lightning`, `hive`, `webmonetization`) |
+| `val` | with a `podcast:value` block (`any`, or `lightning`, `hive`, `webmonetization`). Only for `term` and `title`: other results do not say whether a feed has one, so elsewhere it is refused with `400` |
 | `alive` | not marked dead (on by default; `alive=0` includes dead feeds) |
 
 Where PodcastIndex supports a filter on the call (`cat`, `notcat` and `lang` on
@@ -211,8 +211,8 @@ in PodcastIndex's order. `<Feed>` is `Feed::jsonSerialize()`
 ### Categories — `GET api.php?action=categories`
 
 `200` → `{ "categories": [ { "id": 9, "name": "Business" }, … ] }` from
-`categories/list`, for the category filter. Cached on the server
-(`data/cache/categories.json`) for a day.
+`categories/list`, for the category filter. Cached on the server for a
+day, like searches and feed lookups ([storage.md](storage.md#cache)).
 
 ### Lookup
 
@@ -245,7 +245,7 @@ The `podcast:` attributes follow
 
 ## Limits
 
-From `config.php`, with defaults:
+Settings in `data/config.json`, each described in [config.md](config.md). Defaults:
 
 | Key | Default | Applies to |
 |-----|---------|-----------|

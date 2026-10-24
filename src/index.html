@@ -34,9 +34,53 @@
     <section id="search-section">
       <h2>Search PodcastIndex</h2>
       <form id="search-form">
-        <input type="search" id="search-q" placeholder="Podcast title, author…" required>
-        <button type="submit">Search</button>
+        <div class="row">
+          <select id="search-by" aria-label="Search by">
+            <option value="term">Text</option>
+            <option value="title">Title</option>
+            <option value="person">Person</option>
+            <option value="category">Category (trending)</option>
+            <option value="medium">Medium</option>
+            <option value="tag">Tag</option>
+            <option value="recent">Recently updated</option>
+          </select>
+          <input type="search" id="search-q" placeholder="Podcast title, author…" aria-label="Search for">
+          <select id="search-tag" aria-label="Tag" hidden>
+            <option value="value">podcast:value</option>
+            <option value="valueTimeSplit">podcast:valueTimeSplit</option>
+          </select>
+          <button type="submit">Search</button>
+        </div>
+        <details id="search-filters">
+          <summary>Filters</summary>
+          <div class="filters">
+            <label>Category <select id="filter-cat"><option value="">Any</option></select></label>
+            <label>Not in category <select id="filter-notcat"><option value="">None</option></select></label>
+            <label>Medium
+              <select id="filter-medium">
+                <option value="">Any</option>
+                <option>podcast</option><option>music</option><option>video</option><option>film</option>
+                <option>audiobook</option><option>newsletter</option><option>blog</option>
+              </select>
+            </label>
+            <label>Language <input type="text" id="filter-lang" placeholder="en,sv" size="8"></label>
+            <label id="filter-val-label">Value block
+              <select id="filter-val">
+                <option value="">Any or none</option>
+                <option value="any">Any type</option>
+                <option>lightning</option><option>hive</option><option>webmonetization</option>
+              </select>
+            </label>
+            <label><input type="checkbox" id="filter-clean"> Not explicit</label>
+            <label><input type="checkbox" id="filter-dead"> Include dead feeds</label>
+          </div>
+        </details>
       </form>
+      <div id="results-head" hidden>
+        <span id="results-count" class="muted"></span>
+        <input type="search" id="results-filter" placeholder="Filter results" aria-label="Filter results">
+        <button id="add-all">Add all</button>
+      </div>
       <ul id="results"></ul>
     </section>
   </main>
@@ -66,6 +110,7 @@
       <div class="info">
         <strong class="title"></strong>
         <span class="author muted"></span>
+        <span class="meta muted"></span>
         <span class="url muted"></span>
       </div>
       <button class="add">Add</button>

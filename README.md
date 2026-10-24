@@ -7,7 +7,11 @@ OPML Edit - PodcastIndex.org as backend
 2. Copy `src/config.sample.php` to `src/config.php` and fill in the site URL
    and your PodcastIndex API key and secret. Hostnames and URLs live only in
    `config.php`, not in the code.
-3. Requires PHP 8.2+ with the curl extension.
+3. Limits and cache times are changed on the admin page, stored in
+   `data/config.json` (optional; see `specifications/config.md`). Changes
+   apply at once. The server reads `specifications/config.schema.json`, so
+   deploy the `specifications/` folder next to `src/`.
+4. Requires PHP 8.2+ with the curl extension.
 
 Pages (`index.html`, CSS, JavaScript) are static; PHP is only the backend
 (`api.php`, `lib/`). On Apache, `src/.htaccess` sets the security headers;

@@ -104,6 +104,25 @@ button.danger:hover:not(:disabled) { border-color: var(--error); color: var(--er
 
 #feeds, #results { list-style: none; margin: 12px 0 0; padding: 0; }
 
+#search-form { flex-direction: column; align-items: stretch; }
+#search-form .row { display: flex; gap: 6px; flex-wrap: wrap; }
+select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  max-width: 100%;
+}
+#search-filters summary { cursor: pointer; color: var(--muted); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; }
+.filters label { display: flex; align-items: center; gap: 6px; font-size: 0.9em; }
+#results-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+#results-head input { flex: 1; }
+.result .meta { font-size: 0.85em; }
+.result.dead .title::after { content: " · dead"; color: var(--error); font-weight: normal; }
+
 .feed, .result {
   display: flex;
   align-items: center;

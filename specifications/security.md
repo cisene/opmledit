@@ -99,3 +99,5 @@ being used to reach the server's own network or other internal services:
 not in git. Losing `user_key_secret` makes every account unreachable: back it
 up separately from `data/`.
 `config.sample.php` documents every key.
+Limits and cache times are not secret and live in `data/config.json`,
+which the admin edits ([config.md](config.md)).

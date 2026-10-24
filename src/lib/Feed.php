@@ -39,7 +39,8 @@ final readonly class Feed implements JsonSerializable {
       podcastGuid:    self::str($data['podcastGuid'] ?? null),
       itunesId:       self::int($data['itunesId'] ?? null),
       contentType:    self::str($data['contentType'] ?? null),
-      lastUpdateTime: self::time($data['lastUpdateTime'] ?? null),
+      // Trending results only carry the newest episode's time
+      lastUpdateTime: self::time($data['lastUpdateTime'] ?? $data['newestItemPublishTime'] ?? null),
       lastCrawlTime:  self::time($data['lastCrawlTime'] ?? null),
       lastHttpStatus: self::int($data['lastHttpStatus'] ?? null),
       dead:           (bool)($data['dead'] ?? false),

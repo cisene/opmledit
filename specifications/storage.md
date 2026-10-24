@@ -6,9 +6,13 @@ Documents are stored as JSON files in a data directory configured in
 `config.php`:
 
 ```php
-'data_dir'       => __DIR__ . '/../data',   // outside the web root
-'retention_days' => 90,
+'data_dir' => __DIR__ . '/../data',   // outside the web root
 ```
+
+## Settings
+
+Limits and cache times are in `data/config.json`, edited on the admin page.
+See [config.md](config.md) and [config.schema.json](config.schema.json).
 
 ## Layout
 
@@ -21,9 +25,15 @@ data/
         <id>.json              one file per document
   sessions/                    PHP session files
   ratelimit/                   rate limit counters
-  cache/                       PodcastIndex category list, refreshed daily
+  cache/                       PodcastIndex answers, see "Cache" below
+    categories/list.json       category list
+    search/<sha256>.json       one search, named by a hash of the request
+    feeds/guid/<guid>.json     one feed lookup by podcast guid
+    feeds/url/<sha256>.json    one feed lookup by feed URL
+    feeds/id/<id>.json         one feed lookup by PodcastIndex id
   admin/
     access.json                allowed and denied email addresses, see admin.md
+  config.json                  settings, see config.md
   .last-purge                  timestamp of last purge run
   .htaccess                    "Require all denied" (defence in depth)
 ```
@@ -44,6 +54,29 @@ no email address is stored in a user folder.
 - `data/` is listed in `.gitignore`.
 - The directory is created on first use with mode `0700`, files `0600`, owned
   by the PHP process user.
+
+## Cache
+
+PodcastIndex answers are kept in `data/cache` and reused until they are
+older than `cache_seconds` ([config.md](config.md#cache)):
+
+| Folder | Default | Holds |
+|--------|---------|-------|
+| `search/` | 4 hours | the raw answer of one search call (all modes, each tag page) |
+| `feeds/` | 1 hour | the raw feed record of one lookup, or `null` when PodcastIndex does not know the feed |
+| `categories/` | 1 day | the category list |
+
+- Each file is `{ "value": … }`, written atomically (temp file and
+  rename). Its modification time is its age.
+- The batch lookup (`lookup_batch`) reads and writes the same per-guid
+  files, and only asks PodcastIndex for the guids it has no fresh entry for.
+- Errors from PodcastIndex are not cached.
+- Search filters applied by this server are not part of the cache name;
+  they run on the cached answer.
+- The cache is optional: if `data/cache` cannot be written, every request
+  goes to PodcastIndex.
+- The purge run removes cache files older than a day past their folder's
+  time.
 
 ## In the browser
 

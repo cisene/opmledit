@@ -10,6 +10,10 @@
   const resultsEl = $('#results');
   const feedTpl = $('#feed-tpl');
   const resultTpl = $('#result-tpl');
+  const PODCAST_NS = 'https://podcastindex.org/namespace/1.0';
+
+  // Last search, kept so the results filter and Add all work without a new request
+  let lastResults = [];
 
   // --- persistence -------------------------------------------------------
 
@@ -41,8 +45,8 @@
     statusTimer = setTimeout(() => { el.className = ''; }, 4000);
   }
 
-  function hasFeed(url) {
-    return state.feeds.some((f) => f.xmlUrl === url);
+  function hasFeed(url, guid) {
+    return state.feeds.some((f) => f.xmlUrl === url || (guid && f.podcastGuid === guid));
   }
 
   function addFeed(feed) {
@@ -55,14 +59,30 @@
       xmlUrl: feed.xmlUrl,
       htmlUrl: feed.htmlUrl || '',
       image: feed.image || '',
+      podcastGuid: feed.podcastGuid || '',
     });
     save();
     render();
     return true;
   }
 
-  async function api(params) {
-    const res = await fetch('api.php?' + new URLSearchParams(params));
+  function fromPodcastIndex(f) {
+    return {
+      title: f.channel.title,
+      xmlUrl: f.url,
+      htmlUrl: f.channel.link,
+      image: f.channel.artwork || f.channel.image,
+      podcastGuid: f.podcastGuid,
+    };
+  }
+
+  async function api(params, body) {
+    const init = body === undefined ? {} : {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    };
+    const res = await fetch('api.php?' + new URLSearchParams(params), init);
     const data = await res.json().catch(() => ({ error: 'Invalid response' }));
     if (!res.ok) throw new Error(data.error || 'Request failed');
     return data;
@@ -86,6 +106,7 @@
         xmlUrl: xmlUrl,
         htmlUrl: o.getAttribute('htmlUrl') || '',
         image: '',
+        podcastGuid: o.getAttribute('podcast:guid') || '',
       });
     });
     return { title: title ? title.textContent.trim() : '', feeds: feeds };
@@ -103,6 +124,10 @@
     created.textContent = new Date().toUTCString();
     head.append(title, created);
 
+    if (state.feeds.some((f) => f.podcastGuid)) {
+      opml.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:podcast', PODCAST_NS);
+    }
+
     const body = doc.createElement('body');
     state.feeds.forEach((f) => {
       const o = doc.createElement('outline');
@@ -111,6 +136,7 @@
       o.setAttribute('title', f.title);
       o.setAttribute('xmlUrl', f.xmlUrl);
       if (f.htmlUrl) o.setAttribute('htmlUrl', f.htmlUrl);
+      if (f.podcastGuid) o.setAttributeNS(PODCAST_NS, 'podcast:guid', f.podcastGuid);
       body.appendChild(o);
     });
 
@@ -130,50 +156,61 @@
 
   // --- feed checking -----------------------------------------------------
 
+  // Look up by podcast:guid when known, as it survives a change of feed URL
+  function lookupItem(feed) {
+    return feed.podcastGuid ? { guid: feed.podcastGuid } : { url: feed.xmlUrl };
+  }
+
   async function checkFeed(feed, li) {
     const out = li.querySelector('.check');
     out.textContent = 'Checking…';
     out.className = 'check muted';
     try {
-      const { feed: pi } = await api({ action: 'lookup', url: feed.xmlUrl });
-      if (!pi) {
-        out.textContent = 'Not found in PodcastIndex';
-        out.className = 'check warn';
-        return;
-      }
-      const image = pi.channel.artwork || pi.channel.image;
-      if (!feed.image && image) {
-        feed.image = image;
-        const art = li.querySelector('.art');
-        art.src = image;
-        art.hidden = false;
-      }
-      if (!feed.htmlUrl && pi.channel.link) feed.htmlUrl = pi.channel.link;
-      save();
-
-      const updated = pi.lastUpdateTime ? new Date(pi.lastUpdateTime * 1000).toLocaleDateString() : 'unknown';
-      if (pi.dead) {
-        out.textContent = 'Marked dead in PodcastIndex (last update ' + updated + ')';
-        out.className = 'check error';
-      } else if (pi.url && pi.url !== feed.xmlUrl) {
-        out.textContent = 'Feed has moved to ' + pi.url + ' ';
-        out.className = 'check warn';
-        const fix = document.createElement('button');
-        fix.textContent = 'Use new URL';
-        fix.addEventListener('click', () => {
-          if (hasFeed(pi.url)) { status('New URL is already in list', true); return; }
-          feed.xmlUrl = pi.url;
-          save();
-          render();
-        });
-        out.appendChild(fix);
-      } else {
-        out.textContent = 'OK, last update ' + updated;
-        out.className = 'check ok';
-      }
+      const { feed: pi } = await api(Object.assign({ action: 'lookup' }, lookupItem(feed)));
+      showCheck(feed, li, pi);
     } catch (e) {
       out.textContent = e.message;
       out.className = 'check error';
+    }
+  }
+
+  function showCheck(feed, li, pi) {
+    const out = li.querySelector('.check');
+    if (!pi) {
+      out.textContent = 'Not found in PodcastIndex';
+      out.className = 'check warn';
+      return;
+    }
+    const image = pi.channel.artwork || pi.channel.image;
+    if (!feed.image && image) {
+      feed.image = image;
+      const art = li.querySelector('.art');
+      art.src = image;
+      art.hidden = false;
+    }
+    if (!feed.htmlUrl && pi.channel.link) feed.htmlUrl = pi.channel.link;
+    if (!feed.podcastGuid && pi.podcastGuid) feed.podcastGuid = pi.podcastGuid;
+    save();
+
+    const updated = pi.lastUpdateTime ? new Date(pi.lastUpdateTime * 1000).toLocaleDateString() : 'unknown';
+    if (pi.dead) {
+      out.textContent = 'Marked dead in PodcastIndex (last update ' + updated + ')';
+      out.className = 'check error';
+    } else if (pi.url && pi.url !== feed.xmlUrl) {
+      out.textContent = 'Feed has moved to ' + pi.url + ' ';
+      out.className = 'check warn';
+      const fix = document.createElement('button');
+      fix.textContent = 'Use new URL';
+      fix.addEventListener('click', () => {
+        if (hasFeed(pi.url)) { status('New URL is already in list', true); return; }
+        feed.xmlUrl = pi.url;
+        save();
+        render();
+      });
+      out.appendChild(fix);
+    } else {
+      out.textContent = 'OK, last update ' + updated;
+      out.className = 'check ok';
     }
   }
 
@@ -230,7 +267,26 @@
     render();
   }
 
-  function renderResults(feeds) {
+  function resultMeta(f) {
+    const parts = [];
+    if (f.channel.language) parts.push(f.channel.language);
+    const cats = Object.values(f.channel.categories || {});
+    if (cats.length) parts.push(cats.join(', '));
+    if (f.channel.medium && f.channel.medium !== 'podcast') parts.push(f.channel.medium);
+    if (f.episodeCount) parts.push(f.episodeCount + ' episodes');
+    if (f.lastUpdateTime) parts.push('updated ' + new Date(f.lastUpdateTime * 1000).toLocaleDateString());
+    return parts.join(' · ');
+  }
+
+  function shownResults() {
+    const term = $('#results-filter').value.trim().toLowerCase();
+    if (!term) return lastResults;
+    return lastResults.filter((f) => [f.channel.title, f.channel.author, f.url, resultMeta(f)]
+      .some((v) => (v || '').toLowerCase().includes(term)));
+  }
+
+  function renderResults() {
+    const feeds = shownResults();
     resultsEl.replaceChildren();
     if (!feeds.length) {
       const li = document.createElement('li');
@@ -241,21 +297,59 @@
     }
     feeds.forEach((f) => {
       const li = resultTpl.content.firstElementChild.cloneNode(true);
+      li.classList.toggle('dead', !!f.dead);
       const art = li.querySelector('.art');
       const image = f.channel.artwork || f.channel.image;
       if (image) art.src = image; else art.hidden = true;
       li.querySelector('.title').textContent = f.channel.title;
       li.querySelector('.author').textContent = f.channel.author || '';
+      li.querySelector('.meta').textContent = resultMeta(f);
       li.querySelector('.url').textContent = f.url;
 
       const btn = li.querySelector('.add');
-      if (hasFeed(f.url)) { btn.disabled = true; btn.textContent = 'Added'; }
+      if (hasFeed(f.url, f.podcastGuid)) { btn.disabled = true; btn.textContent = 'Added'; }
       btn.addEventListener('click', () => {
-        const ok = addFeed({ title: f.channel.title, xmlUrl: f.url, htmlUrl: f.channel.link, image: image });
-        if (ok) { btn.disabled = true; btn.textContent = 'Added'; }
+        if (addFeed(fromPodcastIndex(f))) { btn.disabled = true; btn.textContent = 'Added'; }
       });
       resultsEl.appendChild(li);
     });
+  }
+
+  function showResultsHead(data) {
+    const n = data.feeds.length;
+    $('#results-count').textContent = data.truncated
+      ? 'First ' + n + ' feeds, refine the search for the rest'
+      : n + ' feed' + (n === 1 ? '' : 's');
+    $('#results-filter').value = '';
+    $('#results-head').hidden = false;
+  }
+
+  // Show only the inputs the chosen search mode uses
+  function updateSearchForm() {
+    const by = $('#search-by').value;
+    const q = $('#search-q');
+    q.hidden = !['term', 'title', 'person'].includes(by);
+    q.required = !q.hidden;
+    q.placeholder = by === 'person' ? 'Name of a person' : 'Podcast title, author…';
+    $('#search-tag').hidden = by !== 'tag';
+    $('#filter-val-label').hidden = !['term', 'title'].includes(by);
+    if (by === 'category' || by === 'medium') $('#search-filters').open = true;
+  }
+
+  async function loadCategories() {
+    try {
+      const { categories } = await api({ action: 'categories' });
+      categories.sort((a, b) => a.name.localeCompare(b.name)).forEach((c) => {
+        ['#filter-cat', '#filter-notcat'].forEach((sel) => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          $(sel).appendChild(opt);
+        });
+      });
+    } catch (e) {
+      // Category filters stay at "Any"; searching still works
+    }
   }
 
   // --- events ------------------------------------------------------------
@@ -290,11 +384,19 @@
 
   $('#check-all').addEventListener('click', async () => {
     const items = feedsEl.querySelectorAll('.feed');
-    // Sequential to stay polite to the API
-    for (let i = 0; i < state.feeds.length && i < items.length; i++) {
-      await checkFeed(state.feeds[i], items[i]);
+    const n = Math.min(state.feeds.length, items.length);
+    items.forEach((li) => { li.querySelector('.check').textContent = 'Checking…'; });
+    for (let i = 0; i < n; i += 100) {
+      const batch = state.feeds.slice(i, Math.min(i + 100, n));
+      try {
+        const { feeds } = await api({ action: 'lookup_batch' }, { items: batch.map(lookupItem) });
+        batch.forEach((feed, j) => showCheck(feed, items[i + j], feeds[j]));
+      } catch (err) {
+        status(err.message, true);
+        return;
+      }
     }
-    status('Checked ' + items.length + ' feeds');
+    status('Checked ' + n + ' feeds');
   });
 
   $('#clear').addEventListener('click', () => {
@@ -316,7 +418,7 @@
     let feed = { title: url, xmlUrl: url };
     try {
       const { feed: pi } = await api({ action: 'lookup', url: url });
-      if (pi) feed = { title: pi.channel.title, xmlUrl: url, htmlUrl: pi.channel.link, image: pi.channel.artwork || pi.channel.image };
+      if (pi) feed = Object.assign(fromPodcastIndex(pi), { xmlUrl: url });
     } catch (err) {
       // Lookup is a nicety; add the bare URL anyway
     }
@@ -325,20 +427,54 @@
 
   $('#search-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const q = $('#search-q').value.trim();
-    if (!q) return;
+    const by = $('#search-by').value;
+    const params = {
+      action: 'search',
+      by: by,
+      q: $('#search-q').value.trim(),
+      tag: by === 'tag' ? $('#search-tag').value : '',
+      cat: $('#filter-cat').value,
+      notcat: $('#filter-notcat').value,
+      medium: $('#filter-medium').value,
+      lang: $('#filter-lang').value.trim(),
+      val: ['term', 'title'].includes(by) ? $('#filter-val').value : '',
+      clean: $('#filter-clean').checked ? '1' : '',
+      alive: $('#filter-dead').checked ? '0' : '1',
+    };
+    Object.keys(params).forEach((k) => { if (params[k] === '') delete params[k]; });
+
     resultsEl.replaceChildren();
-    const btn = e.target.querySelector('button');
+    $('#results-head').hidden = true;
+    const btn = e.target.querySelector('button[type=submit]');
     btn.disabled = true;
+    btn.textContent = 'Searching…';
     try {
-      const { feeds } = await api({ action: 'search', q: q });
-      renderResults(feeds);
+      const data = await api(params);
+      lastResults = data.feeds;
+      showResultsHead(data);
+      renderResults();
     } catch (err) {
       status(err.message, true);
     } finally {
       btn.disabled = false;
+      btn.textContent = 'Search';
     }
   });
 
+  $('#search-by').addEventListener('change', updateSearchForm);
+  $('#results-filter').addEventListener('input', renderResults);
+
+  $('#add-all').addEventListener('click', () => {
+    const toAdd = shownResults().filter((f) => !hasFeed(f.url, f.podcastGuid));
+    if (!toAdd.length) { status('All shown results are already in the list'); return; }
+    toAdd.forEach((f) => state.feeds.push(Object.assign({ title: f.url, htmlUrl: '', image: '', podcastGuid: '' }, fromPodcastIndex(f))));
+    save();
+    render();
+    renderResults();
+    status('Added ' + toAdd.length + ' feeds');
+  });
+
+  updateSearchForm();
+  loadCategories();
   render();
 })();
