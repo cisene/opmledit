@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OPML 2.0 for opmledit.
+
+  Written from Dave Winer's OPML 2.0 specification, http://opml.org/spec2.opml,
+  with the DLESE (2006) and Eclipse Buckminster OPML 2.0 schemas as reference.
+
+  Differences from the specification, on purpose:
+  - body may be empty (a new document has no outlines yet);
+  - values are not type checked (dates, numbers, booleans, URLs), because
+    opmledit keeps them verbatim.
+
+  Elements and attributes from other namespaces (e.g. podcast:, itunes:) are
+  allowed in head, body and outline, as the specification permits.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="unqualified" attributeFormDefault="unqualified">
+
+  <xs:element name="opml">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="head" type="head"/>
+        <xs:element name="body" type="body"/>
+      </xs:sequence>
+      <xs:attribute name="version" type="xs:string" fixed="2.0" use="required"/>
+      <xs:anyAttribute namespace="##any" processContents="lax"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="head">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="title" type="xs:string"/>
+      <xs:element name="dateCreated" type="xs:string"/>
+      <xs:element name="dateModified" type="xs:string"/>
+      <xs:element name="ownerName" type="xs:string"/>
+      <xs:element name="ownerEmail" type="xs:string"/>
+      <xs:element name="ownerId" type="xs:string"/>
+      <xs:element name="docs" type="xs:string"/>
+      <xs:element name="expansionState" type="xs:string"/>
+      <xs:element name="vertScrollState" type="xs:string"/>
+      <xs:element name="windowTop" type="xs:string"/>
+      <xs:element name="windowLeft" type="xs:string"/>
+      <xs:element name="windowBottom" type="xs:string"/>
+      <xs:element name="windowRight" type="xs:string"/>
+      <xs:any namespace="##other" processContents="lax"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="body">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="outline" type="outline"/>
+      <xs:any namespace="##other" processContents="lax"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="outline">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="outline" type="outline"/>
+      <xs:any namespace="##other" processContents="lax"/>
+    </xs:choice>
+    <xs:attribute name="text" type="xs:string" use="required"/>
+    <xs:attribute name="type" type="xs:string"/>
+    <xs:attribute name="isComment" type="xs:string"/>
+    <xs:attribute name="isBreakpoint" type="xs:string"/>
+    <xs:attribute name="created" type="xs:string"/>
+    <xs:attribute name="category" type="xs:string"/>
+    <xs:anyAttribute namespace="##any" processContents="lax"/>
+  </xs:complexType>
+
+</xs:schema>

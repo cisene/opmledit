@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OPML Edit</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>OPML Edit</h1>
+    <div class="toolbar">
+      <label class="button">Import OPML<input type="file" id="import-file" accept=".opml,.xml,text/xml" hidden></label>
+      <button id="export">Export OPML</button>
+      <button id="check-all">Check all feeds</button>
+      <button id="clear" class="danger">Clear</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="list-section">
+      <div class="section-head">
+        <input type="text" id="list-title" placeholder="List title" aria-label="List title">
+        <span id="count"></span>
+      </div>
+      <form id="add-form">
+        <input type="url" id="add-url" placeholder="Add feed by URL" required>
+        <button type="submit">Add</button>
+      </form>
+      <ol id="feeds"></ol>
+      <p id="empty" class="muted">No feeds yet. Import an OPML file, add a URL, or search PodcastIndex.</p>
+    </section>
+
+    <section id="search-section">
+      <h2>Search PodcastIndex</h2>
+      <form id="search-form">
+        <div class="row">
+          <select id="search-by" aria-label="Search by">
+            <option value="term">Text</option>
+            <option value="title">Title</option>
+            <option value="person">Person</option>
+            <option value="category">Category (trending)</option>
+            <option value="medium">Medium</option>
+            <option value="tag">Tag</option>
+            <option value="recent">Recently updated</option>
+          </select>
+          <input type="search" id="search-q" placeholder="Podcast title, author…" aria-label="Search for">
+          <select id="search-tag" aria-label="Tag" hidden>
+            <option value="value">podcast:value</option>
+            <option value="valueTimeSplit">podcast:valueTimeSplit</option>
+          </select>
+          <button type="submit">Search</button>
+        </div>
+        <details id="search-filters">
+          <summary>Filters</summary>
+          <div class="filters">
+            <label>Category <select id="filter-cat"><option value="">Any</option></select></label>
+            <label>Not in category <select id="filter-notcat"><option value="">None</option></select></label>
+            <label>Medium
+              <select id="filter-medium">
+                <option value="">Any</option>
+                <option>podcast</option><option>music</option><option>video</option><option>film</option>
+                <option>audiobook</option><option>newsletter</option><option>blog</option>
+              </select>
+            </label>
+            <label>Language <input type="text" id="filter-lang" placeholder="en,sv" size="8"></label>
+            <label id="filter-val-label">Value block
+              <select id="filter-val">
+                <option value="">Any or none</option>
+                <option value="any">Any type</option>
+                <option>lightning</option><option>hive</option><option>webmonetization</option>
+              </select>
+            </label>
+            <label><input type="checkbox" id="filter-clean"> Not explicit</label>
+            <label><input type="checkbox" id="filter-dead"> Include dead feeds</label>
+          </div>
+        </details>
+      </form>
+      <div id="results-head" hidden>
+        <span id="results-count" class="muted"></span>
+        <input type="search" id="results-filter" placeholder="Filter results" aria-label="Filter results">
+        <button id="add-all">Add all</button>
+      </div>
+      <ul id="results"></ul>
+    </section>
+  </main>
+
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <template id="feed-tpl">
+    <li class="feed">
+      <img class="art" alt="" loading="lazy">
+      <div class="info">
+        <input class="title" type="text" aria-label="Title">
+        <input class="url" type="url" aria-label="Feed URL">
+        <span class="check muted"></span>
+      </div>
+      <div class="actions">
+        <button class="up" title="Move up">↑</button>
+        <button class="down" title="Move down">↓</button>
+        <button class="lookup" title="Check against PodcastIndex">Check</button>
+        <button class="show-episodes" title="Show the feed's episodes" aria-expanded="false">Episodes</button>
+        <button class="remove danger" title="Remove">✕</button>
+      </div>
+      <div class="episodes" hidden>
+        <div class="episodes-head">
+          <span class="episodes-info muted"></span>
+          <input type="search" class="episodes-filter" placeholder="Filter episodes" aria-label="Filter episodes">
+          <button class="episodes-refresh" title="Fetch the feed again">Refresh</button>
+        </div>
+        <p class="episodes-notes muted"></p>
+        <ol class="episode-list"></ol>
+      </div>
+    </li>
+  </template>
+
+  <template id="episode-tpl">
+    <li class="episode">
+      <span class="date muted"></span>
+      <a class="title" target="_blank" rel="noopener noreferrer"></a>
+      <span class="meta muted"></span>
+      <span class="tags"></span>
+    </li>
+  </template>
+
+  <template id="result-tpl">
+    <li class="result">
+      <img class="art" alt="" loading="lazy">
+      <div class="info">
+        <strong class="title"></strong>
+        <span class="author muted"></span>
+        <span class="meta muted"></span>
+        <span class="url muted"></span>
+      </div>
+      <button class="add">Add</button>
+    </li>
+  </template>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
