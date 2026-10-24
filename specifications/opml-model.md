@@ -107,6 +107,26 @@ Namespace declarations found on inner elements are collected into
 `opml.namespaces` and written on the root on export. If the same prefix is
 bound to two different URIs, the file is rejected.
 
+### Source comment
+
+An optional backlink to where the OPML came from, written as an XML comment
+between `</head>` and `<body>`:
+
+```xml
+  </head>
+  <!-- Source: https://example.org/lists/podcasts.opml -->
+  <body>
+```
+
+- Stored as `opml.sourceUrl` (absent when not set).
+- Must be an `http`/`https` URL, max 2048 characters, without `--` (not
+  allowed inside an XML comment).
+- On import, a comment between `</head>` and `<body>` of the form
+  `Source: <url>` (case-insensitive, surrounding whitespace ignored) is read
+  into `opml.sourceUrl`. If there are several, the first one is used.
+- Written in every export, for every version: a comment is valid in OPML 1.0,
+  1.1 and 2.0, and invisible to programs that read the outline.
+
 ### `<head>`
 
 The OPML 2.0 head elements are stored as named string fields in `opml.head`:
@@ -159,7 +179,8 @@ in the body becomes a node:
 
 ## Not preserved
 
-- XML comments and processing instructions (other than the XML declaration).
+- XML comments (other than the [source comment](#source-comment)) and
+  processing instructions (other than the XML declaration).
 - Whitespace, indentation, attribute quoting style, entity vs. literal
   character choice, and `CDATA` sections (content is kept, the wrapping is
   not).
@@ -213,9 +234,10 @@ Steps:
    `opml.namespaces`, then `opml.attributes`.
 3. `<head>`: known fields present in `opml.head` in table order, then
    `headExtra` nodes.
-4. `<body>`: nodes in order, recursively. Nodes without children and text are
+4. `<!-- Source: <opml.sourceUrl> -->` if set.
+5. `<body>`: nodes in order, recursively. Nodes without children and text are
    written as empty elements (`<outline … />`).
-5. Indented with two spaces.
+6. Indented with two spaces.
 
 `head.dateModified` is set to the save time on each save (RFC 822, UTC), so the
 export reflects the last edit. If the user edits it by hand, the hand value is
@@ -255,6 +277,45 @@ namespaces in `head` and `outline`. They are used to:
 
 `DOMDocument::schemaValidate()` does the checking; no extra library is
 needed.
+
+## Podcasting 2.0 namespace
+
+Outlines for podcast feeds can carry attributes from the Podcasting 2.0
+namespace, so an OPML file can say more about each feed than the plain
+OPML attributes:
+
+```xml
+<opml version="2.0" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+  …
+  <outline type="rss" text="Podcasting 2.0" xmlUrl="https://feeds.podcastindex.org/pc20.xml"
+           podcast:guid="d5a1ae35-5e8b-599a-943b-95609562016d" podcast:medium="podcast"/>
+```
+
+- Namespace URI `https://podcastindex.org/namespace/1.0`, prefix `podcast`
+  (specification: podcasting2.org, github.com/Podcastindex-org/podcast-namespace).
+- The namespace defines RSS tags, not OPML attributes. There is no
+  published convention for OPML, so opmledit uses this rule: **an attribute
+  `podcast:<name>` on an outline holds the value of the feed's channel level
+  `<podcast:<name>>` tag.** For example, `podcast:guid` is the value of
+  `<podcast:guid>`.
+- Filled from PodcastIndex when a feed is added or with **Fill from
+  PodcastIndex**:
+
+  | Attribute | From PodcastIndex | Namespace tag |
+  |-----------|-------------------|---------------|
+  | `podcast:guid` | `podcastGuid` | `<podcast:guid>`, a UUID that stays the same when the feed URL changes |
+  | `podcast:medium` | `channel.medium` | `<podcast:medium>`, e.g. `podcast`, `music`, `audiobook` |
+
+- Any other `podcast:` attribute can be added by hand in the outline
+  details, e.g. `podcast:locked`, `podcast:license`. They are kept as typed.
+- The declaration `xmlns:podcast="…"` is added to the document when the
+  first `podcast:` attribute is set. If the document already binds the
+  namespace URI to another prefix, that prefix is used. If `podcast` is
+  bound to a different URI, podcast attributes cannot be added and the
+  editor says why.
+- They are namespaced attributes, so they are kept in OPML 2.0 exports and
+  left out of 1.x exports (see
+  [Serialization](#serialization-export)).
 
 ## Edits that affect `expansionState`
 

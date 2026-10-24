@@ -78,6 +78,11 @@ A form with one field per OPML 2.0 head element (see
   shown as "set automatically on save".
 - `ownerEmail`, `ownerId`, `docs` validated as email/URL with a warning, not
   a block (values are kept verbatim).
+- **Source URL**, optional, below the head fields: where the OPML came from.
+  It is exported as a comment between head and body
+  (`<!-- Source: https://… -->`, see
+  [opml-model.md](opml-model.md#source-comment)). It has an "open" link and is
+  checked as a URL; `--` is refused.
 - `headExtra` elements are listed read-only with a remove button.
 - Root `version`, namespaces and extra root attributes are shown under an
   "Advanced" disclosure; namespaces can be added and removed (removal blocked
@@ -130,12 +135,17 @@ Opening a node shows all its attributes.
   the selected node (or at the end of the body). Feeds already in the
   document (same `xmlUrl`) are marked "already added".
 - **Check feeds**: for the selected subtree or the whole document, look up each
-  `xmlUrl` one at a time and mark:
+  outline one at a time, by `podcast:guid` when it has one, else by
+  `xmlUrl`, and mark:
   - OK, with last update date
   - Not in PodcastIndex
   - Dead
   - Moved — with a button to replace `xmlUrl` with the new URL
 - Results are shown in the tree and details; they are not stored.
+- **Fill from PodcastIndex** also offers to set `podcast:guid` and
+  `podcast:medium` ([opml-model.md](opml-model.md#podcasting-20-namespace)).
+- Outline details show `podcast:` attributes in their own group, after the
+  OPML attributes.
 
 ## Saving
 

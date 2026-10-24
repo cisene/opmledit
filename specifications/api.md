@@ -124,6 +124,10 @@ check outlines that have an `xmlUrl`.
 |---------|----------|
 | `GET api.php?action=search&q=<term>` | `{ "feeds": [ <Feed> ] }` |
 | `GET api.php?action=lookup&url=<feed url>` | `{ "feed": <Feed> \| null }` |
+| `GET api.php?action=lookup&guid=<podcast guid>` | `{ "feed": <Feed> \| null }` |
+
+Lookup by `guid` uses PodcastIndex `podcasts/byguid`. It finds the feed even
+after its URL has changed.
 
 When a PodcastIndex feed is added, the outline gets:
 
@@ -135,6 +139,11 @@ When a PodcastIndex feed is added, the outline gets:
 | `htmlUrl` | `channel.link` (if any) |
 | `description` | `channel.description` (if any) |
 | `language` | `channel.language` (if any) |
+| `podcast:guid` | `podcastGuid` (if any) |
+| `podcast:medium` | `channel.medium` (if any) |
+
+The `podcast:` attributes follow
+[opml-model.md](opml-model.md#podcasting-20-namespace).
 
 ## Limits
 

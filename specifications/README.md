@@ -55,10 +55,13 @@ after that:
 
 Operations on a document:
 
-- Edit every `<head>` element.
+- Edit every `<head>` element, and an optional source URL written as a
+  comment between head and body, as a backlink to where the OPML came from.
 - Edit the `<body>`: reorder outlines, nest and un-nest them, add and delete
   outlines, open any outline and edit all of its attributes.
 - Add podcast feeds found through PodcastIndex, and check existing feeds.
+- Enrich feed outlines with Podcasting 2.0 `podcast:` attributes
+  (`podcast:guid`, `podcast:medium`, and any others by hand).
 - **Save** to the server, and come back later (weeks) to continue.
 - **Export** as an OPML file download, in the stored version or converted to
   OPML 2.0, 1.1 or 1.0.
@@ -113,8 +116,9 @@ remain and are used to fill in outline attributes from PodcastIndex.
 
 ## Open questions
 
-1. Should XML comments in the uploaded file be preserved? (Currently: no, see
-   [opml-model.md](opml-model.md#not-preserved).)
+1. Should XML comments in the uploaded file be preserved? (Currently: only
+   the source comment between head and body, see
+   [opml-model.md](opml-model.md#source-comment).)
 2. Should export also offer a version from before 1.0? There is no
    published specification; for now such files are imported as 1.0 (or 2.0
    if they use 2.0 features).
