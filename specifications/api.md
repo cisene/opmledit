@@ -162,17 +162,70 @@ The PodcastIndex endpoints `search` and `lookup` below are stateless too.
 
 ## PodcastIndex
 
-Existing endpoints, kept. The client uses them to add feeds as outlines and to
-check outlines that have an `xmlUrl`.
+The client uses these to find feeds and add them as outlines, and to check
+existing outlines. All calls go through the server, which holds the API key
+(PodcastIndex API 1.0, reference: github.com/Podcastindex-org/docs-api).
+
+### Search — `GET api.php?action=search&by=<mode>&…`
+
+| `by` | Needs | PodcastIndex call | Finds |
+|------|-------|-------------------|-------|
+| `term` (default) | `q` | `search/byterm` with `similar` | Free text in feed title, author, owner |
+| `title` | `q` | `search/bytitle` with `similar` | Feed title |
+| `person` | `q` | `search/byperson` | Episodes mentioning a person (person tags, episode title and description, feed author and owner), reduced to their feeds, one per feed |
+| `category` | `cat` | `podcasts/trending` with `cat`, `notcat`, `lang` | Trending feeds in the categories. PodcastIndex has no call that lists *all* feeds of a category |
+| `medium` | `medium` | `podcasts/bymedium` | Feeds with that `podcast:medium` (`podcast`, `music`, `video`, `film`, `audiobook`, `newsletter`, `blog`) |
+| `tag` | `tag` = `value` or `valueTimeSplit` | `podcasts/bytag` | Feeds using `podcast:value` or `podcast:valueTimeSplit`, the only tags PodcastIndex supports here |
+| `recent` | — | `recent/feeds` with `cat`, `notcat`, `lang` | Most recently updated feeds |
+
+**All results.** The search calls (`term`, `title`, `person`) and `category`,
+`medium` and `recent` have no paging in PodcastIndex. They return up to `max`
+results, at most 1000, so the server always asks for 1000. `tag` pages with
+`start_at` / `nextStartAt`; the server follows the pages until there are no
+more. In every mode the server stops at `podcastindex_max_results` (default
+1000) and says so in `truncated`.
+
+**Filters**, optional, for every mode. PodcastIndex supports them only on some
+calls, so the server applies them to the results itself, which works
+everywhere:
+
+| Parameter | Keeps feeds |
+|-----------|-------------|
+| `cat` | in any of these categories (ids or names, comma separated) |
+| `notcat` | in none of these categories |
+| `lang` | with one of these languages (`en,sv`; `unknown` for none given), matching `en` also `en-US` |
+| `medium` | with this medium |
+| `clean` | not marked explicit |
+| `val` | with a `podcast:value` block (`any`, or `lightning`, `hive`, `webmonetization`) |
+| `alive` | not marked dead (on by default; `alive=0` includes dead feeds) |
+
+Where PodcastIndex supports a filter on the call (`cat`, `notcat` and `lang` on
+`category` and `recent`; `val` and `clean` on `term` and `title`), it is
+also passed on, so the 1000 results are the ones that match.
+
+`200` →
+`{ "feeds": [ <Feed> ], "total": 1000, "truncated": true }`,
+in PodcastIndex's order. `<Feed>` is `Feed::jsonSerialize()`
+(`src/lib/Feed.php`).
+
+### Categories — `GET api.php?action=categories`
+
+`200` → `{ "categories": [ { "id": 9, "name": "Business" }, … ] }` from
+`categories/list`, for the category filter. Cached on the server
+(`data/cache/categories.json`) for a day.
+
+### Lookup
 
 | Request | Response |
 |---------|----------|
-| `GET api.php?action=search&q=<term>` | `{ "feeds": [ <Feed> ] }` |
 | `GET api.php?action=lookup&url=<feed url>` | `{ "feed": <Feed> \| null }` |
 | `GET api.php?action=lookup&guid=<podcast guid>` | `{ "feed": <Feed> \| null }` |
+| `POST api.php?action=lookup_batch` with `{ "items": [ { "guid" } \| { "url" } ] }`, max 100 | `{ "feeds": [ <Feed> \| null ] }`, in the same order |
 
 Lookup by `guid` uses PodcastIndex `podcasts/byguid`. It finds the feed even
-after its URL has changed.
+after its URL has changed. `lookup_batch` sends all guids in one
+`podcasts/batch/byguid` request and looks up the URLs one by one. The
+editor's **Check feeds** uses it, 100 outlines per request.
 
 When a PodcastIndex feed is added, the outline gets:
 
@@ -203,3 +256,4 @@ From `config.php`, with defaults:
 | `max_nodes` | 20 000 | Body nodes |
 | `max_depth` | 32 | Nesting depth |
 | `max_documents_per_user` | 200 | `create` and `import` |
+| `podcastindex_max_results` | 1000 | Results per PodcastIndex search |

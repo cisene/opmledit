@@ -162,12 +162,23 @@ Opening a node shows all its attributes.
 
 ## PodcastIndex
 
-- **Search** by term; each result can be added as a new `rss` outline after
-  the selected node (or at the end of the body). Feeds already in the
-  document (same `xmlUrl`) are marked "already added".
-- **Check feeds**: for the selected subtree or the whole document, look up each
-  outline one at a time, by `podcast:guid` when it has one, else by
-  `xmlUrl`, and mark:
+- **Search** with a mode selector ([api.md](api.md#podcastindex)):
+  text (default), title, person, category, medium, tag (`podcast:value`),
+  recently updated. Category and language filters are always available; the
+  category list comes from `categories`.
+- All results are shown, with a count ("312 feeds"), or "first 1000, refine
+  the search" when `truncated`. A filter box narrows the shown results
+  without a new request.
+- Each result shows artwork, title, author, language, categories, episode
+  count, last update, and a "dead" marker.
+- Each result can be added as a new `rss` outline after the selected node
+  (or at the end of the body). **Add all** adds every shown result, inside a
+  new folder outline named after the search (e.g. "PodcastIndex: batman"),
+  in the order shown. Feeds already in the document (same `podcast:guid` or
+  `xmlUrl`) are marked "already added" and skipped by Add all.
+- **Check feeds**: for the selected subtree or the whole document, look up the
+  outlines with `lookup_batch`, 100 per request, by `podcast:guid` when there is
+  one, else by `xmlUrl`, and mark:
   - OK, with last update date
   - Not in PodcastIndex
   - Dead

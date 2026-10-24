@@ -21,6 +21,7 @@ data/
         <id>.json              one file per document
   sessions/                    PHP session files
   ratelimit/                   rate limit counters
+  cache/                       PodcastIndex category list, refreshed daily
   admin/
     access.json                allowed and denied email addresses, see admin.md
   .last-purge                  timestamp of last purge run
