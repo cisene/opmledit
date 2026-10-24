@@ -43,9 +43,14 @@ bin/                       PHP command line scripts (purge, admin password)
 
 ## Scope
 
-Users sign in with email address and password; each user sees only their own
-documents. Once signed in, there are two ways in, and the same operations
-after that:
+Anyone can edit **one document without signing in**. It is kept in the
+browser (IndexedDB), not on the server ([storage.md](storage.md#in-the-browser)).
+
+Users who sign in with email address and password get a **library**: any number
+of documents saved on the server, each user seeing only their own. When signing
+in, the document from the browser can be moved into the library.
+
+There are two ways to start a document, and the same operations after that:
 
 1. **Import** an existing OPML file, uploaded or fetched from a URL, of any version (before 1.0, 1.0, 1.1, 2.0),
    also broken ones (wrong encoding, unclosed elements, no version): they are
@@ -62,15 +67,17 @@ Operations on a document:
 - Add podcast feeds found through PodcastIndex, and check existing feeds.
 - Enrich feed outlines with Podcasting 2.0 `podcast:` attributes
   (`podcast:guid`, `podcast:medium`, and any others by hand).
-- **Save** to the server, and come back later (weeks) to continue.
+- **Save**: signed out, to the browser; signed in, to the server, to come
+  back later (weeks) and continue.
 - **Export** as an OPML file download, in the stored version or converted to
   OPML 2.0, 1.1 or 1.0.
 - Delete the document.
 
-Documents not touched for 90 days (configurable) are purged.
+Library documents not touched for 90 days (configurable) are purged.
 
 A small admin page ([admin.md](admin.md)) lists the email addresses that may
-use the service. Everyone else is refused.
+have an account. Signed out use is open to everyone, with per-IP limits
+([security.md](security.md#abuse-limits)).
 
 ## Out of scope
 
@@ -98,6 +105,7 @@ use the service. Everyone else is refused.
 | D10 | The application never sends mail | Not needed: the email address is only an identifier. No mail configuration |
 | D11 | Only email addresses the admin has allowed can use the service; not verified | An open service gets misused; users are known to the admin personally |
 | D12 | PHP only in `api.php`, `admin-api.php`, `lib/` and `bin/`; pages are static HTML, CSS and JS | Clear separation of backend and frontend; pages can be cached and edited without touching PHP |
+| D13 | Signed out: one document in the browser's IndexedDB; server endpoints for parsing and export are stateless. Signing in offers to move it into the library | Lets anyone try the editor without an account, while nothing is stored on the server for them |
 
 ## Glossary
 

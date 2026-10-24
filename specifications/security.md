@@ -88,6 +88,8 @@ being used to reach the server's own network or other internal services:
 - Upload and document size limits.
 - Per-user limit on stored documents (config `max_documents_per_user`,
   default 200) and per-IP rate limits on account creation.
+- Signed out use stores nothing on the server; its stateless endpoints are
+  rate limited per IP ([auth.md](auth.md#rate-limits)).
 - PodcastIndex calls go through the server; the API secret never reaches the
   browser.
 

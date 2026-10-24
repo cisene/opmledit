@@ -1,7 +1,9 @@
 # Administration
 
-The users are people the admin knows personally. The admin adds their email
-addresses to an access list; everyone else is kept out.
+Account holders are people the admin knows personally. The admin adds their
+email addresses to an access list; nobody else can have an account. (Editing
+a single document in the browser without an account is open to everyone,
+see [README.md](README.md#scope).)
 
 ## Access list
 

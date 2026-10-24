@@ -114,8 +114,9 @@ out.
 
 ## Authorization
 
-- Every document and PodcastIndex endpoint requires a session, else `401` and
-  the page shows the sign-in screen.
+- Every library endpoint requires a session, else `401`. The stateless
+  endpoints (`parse`, `new`, `render`, `search`, `lookup`) do not
+  ([api.md](api.md#stateless-endpoints)).
 - Every signed-in request checks that the session's email address is still
   allowed. If it is not, the session is destroyed and the answer is `403
   not_allowed`.
@@ -129,6 +130,8 @@ out.
 | Failed sign-ins | 10 per 15 minutes | IP |
 | Failed sign-ins | 5 per 15 minutes | email address (hashed with HMAC, not stored in clear) |
 | Account creations | 5 per hour | IP |
+| Stateless requests without a session (`parse`, `render`, `search`, `lookup`) | 300 per hour | IP |
+| `parse` from a URL without a session | 30 per hour | IP |
 
 Over the limit: `429`. Counters are small files in `data/ratelimit/`, removed
 after their window. Every login request costs a key derivation, so the limits

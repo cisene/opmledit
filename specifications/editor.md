@@ -8,11 +8,40 @@ and CSS (`src/css/`). It talks to the server only through `api.php`
 
 | URL | Shows |
 |-----|-------|
-| `/` | Sign-in screen when signed out, else start screen |
-| `/?doc=<id>` | Editor for that document (sign-in screen first if signed out, then back to the document) |
+| `/` | Signed out: the editor with the browser's document. Signed in: start screen (library) |
+| `/?signin` | Sign-in screen |
+| `/?doc=<id>` | Editor for a library document (sign-in screen first if signed out, then back to the document) |
 | `/?account` | Account settings |
 
 On load the page calls `me` to know whether a session exists.
+
+### Signed out
+
+The editor opens with the one document kept in the browser
+([storage.md](storage.md#in-the-browser)), or an empty one.
+
+- Toolbar: **New**, **Import** (file or URL), **Export**, and **Sign in**.
+  New and Import replace the browser document, after a confirmation.
+- Changes are kept in the browser as they are made; there is no Save button.
+  The title bar says "Kept in this browser only".
+- New uses `new`, import uses `parse`, export uses `render`, so nothing is
+  stored on the server ([api.md](api.md#stateless-endpoints)).
+- Everything else (head, body tree, outline details, PodcastIndex) works as
+  for library documents.
+
+### Moving the browser document into the library
+
+After signing in or creating an account, if the browser holds a document
+that is not empty, the page asks:
+
+> You have a document in this browser, "<title>". Move it to your library?
+> **Move** · **Discard** · **Not now**
+
+- **Move**: `create` with the document. When that succeeds, it is removed from
+  the browser and opened from the library.
+- **Discard**: removed from the browser after a confirmation.
+- **Not now**: kept in the browser; asked again at the next sign in. The start
+  screen shows it as "In this browser" with a **Move to library** button.
 
 ### Sign-in screen
 
@@ -153,10 +182,11 @@ Opening a node shows all its attributes.
 
 - Explicit **Save** (button, Ctrl+S). The title bar shows "unsaved changes"
   while dirty; leaving the page with unsaved changes asks for confirmation.
-- No autosave to the server. A draft of unsaved changes is kept in
-  `localStorage` per document and offered for restore when reopening, so a
+- No autosave to the server. A draft of unsaved changes is kept in the
+  browser's IndexedDB per document and offered for restore when reopening, so a
   closed tab or crash does not lose work. Drafts are cleared on sign out, so
-  the next person using the same browser does not see them.
+  the next person using the same browser does not see them. (The signed out
+  browser document is not a draft and is kept.)
 - If the session has expired (401), the editor shows the sign-in form in a
   dialog, keeps all local changes, and retries the save after sign-in.
 - On conflict (409) the editor offers: reload the server version (discarding

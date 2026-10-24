@@ -6,12 +6,14 @@ except export.
 
 ## Conventions
 
-- All endpoints except `register` and `login` require a signed-in session
+- All endpoints except `register`, `login` and the
+  [stateless endpoints](#stateless-endpoints) require a signed-in session
   ([auth.md](auth.md)); documents are always read from and written to the
   session user's folder.
-- State changing requests (`POST`, `PUT`, `DELETE`) must send the session's
-  CSRF token in an `X-CSRF-Token` header, and an `Origin` header matching
-  `site_url` when the browser sends one. Otherwise `403`.
+- State changing requests (`POST`, `PUT`, `DELETE`) must send an `Origin`
+  header matching `site_url` when the browser sends one. With a session they
+  must also send the session's CSRF token in an `X-CSRF-Token` header.
+  Otherwise `403`.
 - Request bodies are JSON (`Content-Type: application/json`) except import.
 - Document ids are validated against `^[A-Za-z0-9_-]{22}$` before any file
   access.
@@ -63,7 +65,12 @@ newest `modified` first. `title` is `opml.head.title`. Listing does not renew
 
 ### Create new — `POST api.php?action=create`
 
-No body. Creates an empty document (see [opml-model.md](opml-model.md#new-documents)).
+Without a body, creates an empty document (see
+[opml-model.md](opml-model.md#new-documents)).
+
+With a body `{ "opml": <opml>, "origin": <origin> }`, creates the document from
+it. The body is validated like a save. This is how the browser's document is
+moved into the library when signing in.
 
 `201` → `{ "document": <document> }`
 
@@ -126,6 +133,32 @@ changes.
 ### Delete — `DELETE api.php?action=delete&id=<id>`
 
 `204`. Removes the file immediately.
+
+## Stateless endpoints
+
+These work with or without a session and store nothing on the server. Signed
+out, the editor uses them for its one browser document. Without a session they
+are rate limited per IP ([auth.md](auth.md#rate-limits)).
+
+### Parse — `POST api.php?action=parse`
+
+Same input as **Import** above (a file, or JSON `{ "url" }`), and the same
+parsing and repair, but nothing is stored.
+
+`200` → `{ "opml": <opml>, "origin": <origin>, "version": "1.1", "warnings": [ … ] }`
+
+### New — `GET api.php?action=new`
+
+`200` → `{ "opml": <opml> }`, an empty document as in
+[opml-model.md](opml-model.md#new-documents).
+
+### Render — `POST api.php?action=render`
+
+Body `{ "opml": <opml>, "version": "2.0" | "1.1" | "1.0" | null, "filename": "…" | null }`.
+Validates and returns the OPML file, exactly like **Export** above. The
+browser saves it with a download link.
+
+The PodcastIndex endpoints `search` and `lookup` below are stateless too.
 
 ## PodcastIndex
 

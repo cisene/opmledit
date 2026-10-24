@@ -44,6 +44,26 @@ no email address is stored in a user folder.
 - The directory is created on first use with mode `0700`, files `0600`, owned
   by the PHP process user.
 
+## In the browser
+
+Signed out, the one document lives in the browser's IndexedDB, never on the
+server:
+
+- Database `opmledit`, object store `local`, a single record with key
+  `"document"`:
+  `{ "schemaVersion": 1, "origin": {…}, "modified": "<RFC 3339>", "opml": {…} }`.
+  `origin` and `opml` are as in the [document file](#document-file).
+- Written on every change (debounced), so there is no Save button needed
+  and nothing is lost when the tab closes.
+- It has no expiry. It stays until the user replaces it, discards it, or
+  moves it into the library.
+- If IndexedDB is not available (some private windows), the document lives
+  in memory only and the page says it will be lost when the tab closes.
+
+The same database holds drafts of unsaved changes to library documents
+(object store `drafts`, keyed by document id; see
+[editor.md](editor.md#saving)).
+
 ## Document file
 
 One JSON object per file, UTF-8, validated by
@@ -114,7 +134,7 @@ written into the exported OPML. The OPML's own dates live in `opml.head`.
 
 | Event | `revision` | `modified` | `expires` |
 |-------|------------|------------|-----------|
-| Create (new or import) | 1 | now | now + retention |
+| Create (new, import, or moved from the browser) | 1 | now | now + retention |
 | Open (GET) | — | — | now + retention, written only if it moves by more than 1 day |
 | Save | +1 | now | now + retention |
 | Export | — | — | now + retention (same 1 day rule) |
